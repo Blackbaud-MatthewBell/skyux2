@@ -1,13 +1,28 @@
 import {
-  inject,
-  TestBed
+  ComponentFixture,
+  TestBed,
+  fakeAsync,
+  tick
 } from '@angular/core/testing';
 
+import {
+  expect,
+  SkyAppTestUtility
+} from '@blackbaud/skyux-builder/runtime/testing/browser';
+
+import { SkyTabsetComponent } from './tabset.component';
 import { SkyTabsetAdapterService } from './tabset-adapter.service';
+import { SkyTabsetService } from './tabset.service';
 import { SkyTabsFixturesModule } from './fixtures/tabs-fixtures.module';
 import { TabsetTestComponent } from './fixtures/tabset.component.fixture';
+import { TabsetActiveTestComponent } from './fixtures/tabset-active.component.fixture';
 import { MockTabsetAdapterService } from './fixtures/tabset-adapter.service.mock';
-import { TestUtility } from '../testing/testutility';
+
+import {
+  DebugElement
+} from '@angular/core';
+
+import { By } from '@angular/platform-browser';
 
 describe('Tabset component', () => {
   beforeEach(() => {
@@ -21,12 +36,13 @@ describe('Tabset component', () => {
   function validateTabSelected(el: Element, tabIndex: number) {
     let selectedCls: string;
     let buttonEls: NodeListOf<Element>;
+    let inDropDownMode = el.querySelector('.sky-tabset-mode-dropdown');
 
-    if (el.querySelector('.sky-tabset-mode-dropdown')) {
+    if (inDropDownMode) {
       selectedCls = 'sky-tab-dropdown-item-selected';
       buttonEls = el.querySelectorAll('.sky-tab-dropdown-item');
     } else {
-      selectedCls = 'sky-tab-button-selected';
+      selectedCls = 'sky-btn-tab-selected';
       buttonEls = el.querySelectorAll('.sky-tab-button');
     }
 
@@ -48,23 +64,41 @@ describe('Tabset component', () => {
 
       expect(buttonEl.classList.contains(selectedCls)).toBe(expectedHasClass);
       expect(panelDisplay).toBe(expectedDisplay);
+
+      if (!inDropDownMode) {
+        expect(buttonEl.getAttribute('aria-selected')).toBe(expectedHasClass.toString());
+      }
     }
   }
 
   describe('tabs with active attribute', () => {
-    it('should change the active tab when tab active is set to true', () => {
+    it('should change the active tab when tab active is set to true', fakeAsync(() => {
       let fixture = TestBed.createComponent(TabsetTestComponent);
       let cmp: TabsetTestComponent = fixture.componentInstance;
       let el = fixture.nativeElement;
 
       fixture.detectChanges();
+      tick();
+      fixture.detectChanges();
+      tick();
 
       cmp.activeTab = 1;
 
       fixture.detectChanges();
+      tick();
+      fixture.detectChanges();
+      tick();
 
       validateTabSelected(el, 1);
-    });
+      cmp.activeTab = 2;
+
+      fixture.detectChanges();
+      tick();
+      fixture.detectChanges();
+      tick();
+
+      validateTabSelected(el, 2);
+    }));
 
     it('should change the active tab when the tab is clicked manually', () => {
       let fixture = TestBed.createComponent(TabsetTestComponent);
@@ -77,6 +111,21 @@ describe('Tabset component', () => {
       fixture.detectChanges();
 
       validateTabSelected(el, 1);
+    });
+
+    it('should not change the active tab when a disabled tab is clicked', () => {
+      let fixture = TestBed.createComponent(TabsetTestComponent);
+      let el = fixture.nativeElement;
+
+      fixture.componentInstance.tab2Disabled = true;
+
+      fixture.detectChanges();
+
+      el.querySelectorAll('.sky-btn-tab')[1].click();
+
+      fixture.detectChanges();
+
+      validateTabSelected(el, 0);
     });
 
     it('should initialize the tabs properly when active is set to true', () => {
@@ -214,6 +263,54 @@ describe('Tabset component', () => {
     }
   );
 
+  it(
+    'should display count in tab when tabHeaderCount is defined',
+    () => {
+      let fixture = TestBed.createComponent(TabsetTestComponent);
+      let cmp: TabsetTestComponent = fixture.componentInstance;
+      let el = fixture.nativeElement;
+
+      let count = 99;
+      cmp.tab3HeaderCount = count;
+      fixture.detectChanges();
+      let tabEl = el.querySelectorAll('.sky-btn-tab')[2].querySelector('.sky-tab-header-count');
+
+      expect(tabEl.innerText.trim()).toBe(count.toString());
+    }
+  );
+
+  it(
+    'tabHeaderCount span element should not exist when tabHeaderCount is undefined',
+    () => {
+      let fixture = TestBed.createComponent(TabsetTestComponent);
+      let cmp: TabsetTestComponent = fixture.componentInstance;
+      let el = fixture.nativeElement;
+
+      let count: number = undefined;
+      cmp.tab3HeaderCount = count;
+      fixture.detectChanges();
+      let tabEl = el.querySelectorAll('.sky-btn-tab')[2].querySelector('.sky-tab-header-count');
+
+      expect(!tabEl);
+    }
+  );
+
+  it(
+    'should display zero in tab when tabHeaderCount is set to zero',
+    () => {
+      let fixture = TestBed.createComponent(TabsetTestComponent);
+      let cmp: TabsetTestComponent = fixture.componentInstance;
+      let el = fixture.nativeElement;
+
+      let count = 0;
+      cmp.tab3HeaderCount = count;
+      fixture.detectChanges();
+      let tabEl = el.querySelectorAll('.sky-btn-tab')[2].querySelector('.sky-tab-header-count');
+
+      expect(tabEl.innerText.trim()).toBe(count.toString());
+    }
+  );
+
   it('should add no buttons if add and open are not defined', () => {
     let fixture = TestBed.createComponent(TabsetTestComponent);
     let el = fixture.nativeElement;
@@ -230,7 +327,7 @@ describe('Tabset component', () => {
       let fixture = TestBed.createComponent(TabsetTestComponent);
 
       function fireResizeEvent() {
-        TestUtility.fireDomEvent(window, 'resize');
+        SkyAppTestUtility.fireDomEvent(window, 'resize');
         fixture.detectChanges();
       }
 
@@ -256,21 +353,49 @@ describe('Tabset component', () => {
     }
   );
 
+  it(
+  'should collapse into a dropdown  on initialization',
+    fakeAsync(() => {
+      let fixture = TestBed.createComponent(TabsetTestComponent);
+
+      fixture.componentInstance.tabMaxWidth = 20;
+
+      let el = fixture.nativeElement;
+
+      fixture.detectChanges();
+      tick();
+      fixture.detectChanges();
+
+      let tabEl = el.querySelector('.sky-dropdown-button-type-tab');
+
+      expect(tabEl).not.toBeNull();
+    }
+  ));
+
   describe('when collapsed', () => {
+    let fixture: ComponentFixture<TabsetTestComponent>;
     let mockAdapterService: MockTabsetAdapterService;
 
-    beforeEach(
-      inject([SkyTabsetAdapterService], (_mockAdapterService: MockTabsetAdapterService) => {
-        mockAdapterService = _mockAdapterService;
-        mockAdapterService.disableDetectOverflow = true;
-      })
-    );
+    beforeEach(() => {
+      mockAdapterService = new MockTabsetAdapterService();
+      mockAdapterService.disableDetectOverflow = true;
+
+      fixture = TestBed.overrideComponent(SkyTabsetComponent, {
+        set: {
+          providers: [
+            SkyTabsetService,
+            {
+              provide: SkyTabsetAdapterService,
+              useValue: mockAdapterService
+            }
+          ]
+        }
+      }).createComponent(TabsetTestComponent);
+    });
 
     it(
       'should display the selected tab in the collapsed tab dropdown button',
       () => {
-        let fixture = TestBed.createComponent(TabsetTestComponent);
-
         let el = fixture.nativeElement;
         let cmp: TabsetTestComponent = fixture.componentInstance;
 
@@ -291,37 +416,85 @@ describe('Tabset component', () => {
       }
     );
 
-    it(
-      'should allow another tab to be selected from the dropdown',
-      () => {
-        mockAdapterService.disableDetectOverflow = true;
-
-        let fixture = TestBed.createComponent(TabsetTestComponent);
-
+    it('should allow another tab to be selected from the dropdown', fakeAsync(() => {
         let el = fixture.nativeElement;
 
         fixture.detectChanges();
+        tick();
 
         mockAdapterService.fakeOverflowChange(true);
 
         fixture.detectChanges();
+        tick();
 
         let tabEl = el.querySelector('.sky-dropdown-button-type-tab');
 
         tabEl.click();
-        el.querySelectorAll('.sky-tab-dropdown-item-btn')[1].click();
-
+        tick();
         fixture.detectChanges();
+        tick();
+
+        let dropdownTabButtons = el.querySelectorAll('.sky-tab-dropdown-item-btn');
+        expect(dropdownTabButtons[1]).toHaveText('Tab 2');
+
+        dropdownTabButtons[1].click();
+        tick();
+        fixture.detectChanges();
+        tick();
 
         validateTabSelected(el, 1);
       }
-    );
+    ));
+
+    it(
+      'should allow another not allow tab to be selected from the dropdown when disabled',
+      fakeAsync(() => {
+        let el = fixture.nativeElement;
+
+        fixture.componentInstance.tab2Disabled = true;
+
+        fixture.detectChanges();
+        tick();
+
+        mockAdapterService.fakeOverflowChange(true);
+
+        fixture.detectChanges();
+        tick();
+
+        let tabEl = el.querySelector('.sky-dropdown-button-type-tab');
+
+        tabEl.click();
+        tick();
+        fixture.detectChanges();
+        tick();
+
+        let dropdownTabButtons = el.querySelectorAll('.sky-tab-dropdown-item-btn');
+
+        dropdownTabButtons[0].click();
+        tick();
+        fixture.detectChanges();
+        tick();
+
+        tabEl.click();
+        tick();
+        fixture.detectChanges();
+        tick();
+
+        expect(dropdownTabButtons[1]).toHaveText('Tab 2');
+        expect(dropdownTabButtons[1]).toHaveCssClass('sky-btn-disabled');
+
+        dropdownTabButtons[1].click();
+        tick();
+        fixture.detectChanges();
+        tick();
+
+        validateTabSelected(el, 0);
+      }
+    ));
 
     it(
       'should notify the consumer when a tab\'s close button is clicked',
       () => {
-        let fixture = TestBed.createComponent(TabsetTestComponent);
-
         let el = fixture.nativeElement;
 
         fixture.detectChanges();
@@ -344,6 +517,121 @@ describe('Tabset component', () => {
         expect(el.querySelectorAll('.sky-btn-tab').length).toBe(2);
       }
     );
+  });
+
+  describe('active state on tabset', () => {
+    it('should initialize active state based on active', fakeAsync(() => {
+      let fixture = TestBed.createComponent(TabsetActiveTestComponent);
+      let el = fixture.nativeElement;
+
+      fixture.detectChanges();
+      tick();
+      fixture.detectChanges();
+      tick();
+      validateTabSelected(el, 0);
+
+    }));
+
+    it('should listen for changes in active state', fakeAsync(() => {
+      let fixture = TestBed.createComponent(TabsetActiveTestComponent);
+      let cmp: TabsetActiveTestComponent = fixture.componentInstance;
+      let el = fixture.nativeElement;
+
+      fixture.detectChanges();
+      tick();
+      fixture.detectChanges();
+      tick();
+      cmp.activeIndex = 1;
+     fixture.detectChanges();
+      tick();
+      fixture.detectChanges();
+      tick();
+      validateTabSelected(el, 1);
+
+      cmp.activeIndex = 'something';
+      fixture.detectChanges();
+      tick();
+      fixture.detectChanges();
+      tick();
+      validateTabSelected(el, 2);
+
+    }));
+
+    it('should emit an event on tab change', fakeAsync(() => {
+      let fixture = TestBed.createComponent(TabsetActiveTestComponent);
+      let cmp: TabsetActiveTestComponent = fixture.componentInstance;
+      let el = fixture.nativeElement;
+
+      fixture.detectChanges();
+      tick();
+      fixture.detectChanges();
+      tick();
+
+      el.querySelectorAll('.sky-btn-tab')[2].click();
+
+      fixture.detectChanges();
+      tick();
+      fixture.detectChanges();
+      tick();
+      expect(cmp.activeIndex).toBe('something');
+      validateTabSelected(el, 2);
+
+      el.querySelectorAll('.sky-btn-tab')[0].click();
+
+      fixture.detectChanges();
+      tick();
+      fixture.detectChanges();
+      tick();
+      expect(cmp.activeIndex).toBe(0);
+      validateTabSelected(el, 0);
+
+    }));
+
+    it('handles removing and then changing tabs', fakeAsync(() => {
+      let fixture = TestBed.createComponent(TabsetActiveTestComponent);
+      let cmp: TabsetActiveTestComponent = fixture.componentInstance;
+      let el = fixture.nativeElement;
+
+      fixture.detectChanges();
+      tick();
+      fixture.detectChanges();
+      tick();
+
+      el.querySelectorAll('.sky-btn-tab')[1].click();
+
+      fixture.detectChanges();
+      tick();
+      fixture.detectChanges();
+      tick();
+      cmp.tab2Available = false;
+      fixture.detectChanges();
+      tick();
+      fixture.detectChanges();
+      tick();
+      validateTabSelected(el, 2);
+
+      el.querySelectorAll('.sky-btn-tab')[0].click();
+
+      fixture.detectChanges();
+      tick();
+      fixture.detectChanges();
+      tick();
+      expect(cmp.activeIndex).toBe(0);
+      validateTabSelected(el, 0);
+    }));
+
+    it('handles initialized tabs', fakeAsync(() => {
+      let fixture = TestBed.createComponent(TabsetActiveTestComponent);
+      let cmp: TabsetActiveTestComponent = fixture.componentInstance;
+      let el = fixture.nativeElement;
+      cmp.activeIndex = 1;
+      fixture.detectChanges();
+      tick();
+      fixture.detectChanges();
+      tick();
+      validateTabSelected(el, 1);
+    }));
+
   });
 
   describe('collapsible tabs', () => {
@@ -380,5 +668,40 @@ describe('Tabset component', () => {
       xit('adds max width when window size changes', () => {
       });
     });
+  });
+
+   describe('keyboard accessibility', () => {
+    let debugElement: DebugElement;
+    let fixture: ComponentFixture<TabsetTestComponent>;
+
+    beforeEach(() => {
+      TestBed.configureTestingModule({
+        imports: [
+          SkyTabsFixturesModule
+        ]
+      });
+      fixture = TestBed.createComponent(TabsetTestComponent);
+      debugElement = fixture.debugElement;
+    });
+
+    it('should have tabindex of 0', () => {
+      fixture.detectChanges();
+      expect(debugElement.query(By.css('.sky-btn-tab')).attributes['tabindex']).toBe('0');
+    });
+
+    it('should emit a click event on enter press', () => {
+      fixture.detectChanges();
+      fixture.detectChanges();
+      let el =  debugElement.queryAll(By.css('.sky-btn-tab'))[1];
+
+      el.triggerEventHandler('keydown', { keyCode: 15});
+      fixture.detectChanges();
+      validateTabSelected(fixture.nativeElement, 0);
+
+      el.triggerEventHandler('keydown', { keyCode: 13});
+      fixture.detectChanges();
+      validateTabSelected(fixture.nativeElement, 1);
+    }
+    );
   });
 });

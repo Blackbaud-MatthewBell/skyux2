@@ -1,0 +1,24 @@
+@import '../../scss/mixins';
+
+.sky-avatar {
+  /deep/ .sky-file-drop-accept {
+    .sky-avatar-wrapper {
+      border: dashed $sky-avatar-border-width $sky-highlight-color-success;
+    }
+  }
+
+  /deep/ .sky-file-drop-reject {
+    .sky-avatar-wrapper {
+      border: dashed $sky-avatar-border-width $sky-highlight-color-danger;
+    }
+  }
+
+  /deep/ .sky-file-drop {
+    .sky-avatar-wrapper {
+      cursor: pointer;
+    }
+  }
+  /deep/ .sky-file-drop-col {
+    flex-basis: initial;
+  }
+}

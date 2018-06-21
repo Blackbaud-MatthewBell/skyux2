@@ -4,14 +4,14 @@ const ALERT_TYPE_DEFAULT = 'warning';
 
 @Component({
   selector: 'sky-alert',
-  styles: [require('./alert.component.scss')],
-  template: require('./alert.component.html')
+  styleUrls: ['./alert.component.scss'],
+  templateUrl: './alert.component.html'
 })
 export class SkyAlertComponent {
   @Input()
   public set alertType(value: string) {
     this._alertType = value;
-  };
+  }
 
   public get alertType() {
     return this._alertType || ALERT_TYPE_DEFAULT;

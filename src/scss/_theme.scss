@@ -1,4 +1,5 @@
-@import "variables";
+@import "mixins";
+
 * {
   box-sizing: border-box;
 }
@@ -7,11 +8,12 @@ body,
 form,
 html {
   font-size: $sky-font-size-base;
-  font-family: $sky-font-family-base;
+  font-family: $sky-font-family;
 }
 
 body {
-  background-color: $sky-body-background-color;
+  background-color: $sky-background-color-neutral-light;
+  color: $sky-text-color-default;
 }
 
 h1,
@@ -20,17 +22,18 @@ h3,
 h4,
 h5,
 h6 {
-  font-weight: 100;
-  font-family: $sky-font-family-base;
+  font-weight: 400;
   line-height: 1.1;
 }
 
 h2 {
-  font-size: 24px;
+  font-size: 26px;
+  font-weight: 300;
 }
 
 h3 {
-  font-size: 16px;
+  font-size: 19px;
+  color: $sky-text-color-deemphasized;
 }
 
 h4 {
@@ -45,7 +48,6 @@ h6 {
   font-size: 10px;
 }
 
-h3,
 h4,
 h5,
 h6 {
@@ -53,12 +55,22 @@ h6 {
 }
 
 h1 {
-  font-family: $sky-font-family-narrow;
-  font-size: 32px;
+  font-size: 34px;
+  font-weight: 300;
 }
 
 [hidden] {
   display: none !important;
+}
+
+a {
+  color: $sky-text-color-action-primary;
+  text-decoration: none;
+
+  &:hover {
+    color: darken($sky-text-color-action-primary, 10%);
+    text-decoration: underline;
+  }
 }
 
 button {
@@ -66,4 +78,93 @@ button {
     outline: 0;
     background-image: none;
   }
+}
+
+select {
+  background-color: #fff;
+  background-image: none;
+  @include sky-border(light, top, bottom, left, right);
+  border-radius: 1px;
+  font-size: $sky-font-size-base;
+  height: 34px;
+  padding: $sky-padding-half $sky-padding;
+}
+
+.sky-container {
+  margin: 0 auto;
+  padding: 0 $sky-padding-plus-half;
+}
+
+@media (min-width: $sky-screen-sm-min) {
+  .sky-container {
+    width: $sky-screen-sm-min - 10;
+  }
+}
+
+@media (min-width: $sky-screen-md-min) {
+  .sky-container {
+    width: $sky-screen-md-min - 20;
+  }
+}
+
+@media (min-width: $sky-screen-lg-min) {
+  .sky-container {
+    width: $sky-screen-lg-min - 10;
+  }
+}
+
+.sky-pull-right {
+  float: right;
+}
+
+.sky-list-unstyled {
+  list-style: none;
+  padding: 0;
+
+  li {
+    padding-bottom: $sky-padding-half;
+  }
+}
+
+mark.sky-highlight-mark {
+  background-color: $sky-highlight-color-warning;
+  color: $sky-text-color-default;
+}
+
+[role="button"] {
+  cursor: pointer;
+}
+
+/* Placeholder Text */
+::-webkit-input-placeholder {
+    @include sky-deemphasized;
+    opacity: 1;
+}
+
+::-moz-placeholder { /* Firefox 19+ */
+    @include sky-deemphasized;
+    opacity: 1;
+}
+
+input:-moz-placeholder { /* Firefox 18- */
+    @include sky-deemphasized;
+    opacity: 1;
+}
+
+:-ms-input-placeholder { /* IE */
+    @include sky-deemphasized;
+    opacity: 1;
+}
+/* End Placeholder Text */
+
+.sky-rounded-corners {
+  border-radius: $sky-border-radius;
+}
+
+.sky-rounded-circle {
+  border-radius: 50%;
+}
+
+.sky-shadow {
+  @include sky-shadow;
 }

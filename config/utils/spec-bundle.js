@@ -20,12 +20,14 @@ require('ts-helpers');
 
 require('zone.js/dist/zone');
 require('zone.js/dist/long-stack-trace-zone');
-require('zone.js/dist/jasmine-patch');
 require('zone.js/dist/async-test');
 require('zone.js/dist/fake-async-test');
+require('zone.js/dist/sync-test');
+require('zone.js/dist/proxy');
+require('zone.js/dist/jasmine-patch');
 
-// RxJS
-require('rxjs/Rx');
+require('intl');
+require('intl/locale-data/jsonp/en');
 
 var testing = require('@angular/core/testing');
 var browser = require('@angular/platform-browser-dynamic/testing');
@@ -46,7 +48,7 @@ Object.assign(global, testing);
  * any file that ends with spec.js and get its path. By passing in true
  * we say do this recursively
  */
-var testContext = require.context('../../src', true, /\.spec\.ts/);
+var testContext = require.context('../../src/modules', true, /\.spec\.ts/);
 
 /*
  * get all the files, for each file, call the context function

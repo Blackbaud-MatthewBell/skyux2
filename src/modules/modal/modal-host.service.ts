@@ -1,14 +1,15 @@
 import {
-  EventEmitter,
-  Injectable
+  EventEmitter
 } from '@angular/core';
 
-import { SkyModalComponent } from './modal.component';
-
-@Injectable()
 export class SkyModalHostService {
   public static get openModalCount(): number {
     return SkyModalHostService.modalHosts.length;
+  }
+
+  public static get fullPageModalCount(): number {
+    let fullPageModals = SkyModalHostService.modalHosts.filter(modal => modal.fullPage);
+    return fullPageModals.length;
   }
 
   private static get BASE_Z_INDEX(): number {
@@ -19,27 +20,34 @@ export class SkyModalHostService {
     return SkyModalHostService.BASE_Z_INDEX + SkyModalHostService.modalHosts.length * 10;
   }
 
+  public static get topModal(): SkyModalHostService {
+    return SkyModalHostService.modalHosts[SkyModalHostService.modalHosts.length - 1];
+  }
+
   private static modalHosts: SkyModalHostService[] = [];
 
-  public close = new EventEmitter<SkyModalComponent>();
+  public close = new EventEmitter<void>();
+  public openHelp = new EventEmitter<any>();
 
-  public constructor() {
+  constructor(private fullPage: boolean) {
     SkyModalHostService.modalHosts.push(this);
   }
 
   public getModalZIndex(): number {
     let zIndex = SkyModalHostService.BASE_Z_INDEX + 1;
-
     zIndex += (SkyModalHostService.modalHosts.indexOf(this) + 1) * 10;
-
     return zIndex;
   }
 
-  public onClose(modalComponent: SkyModalComponent): void {
-    this.close.emit(modalComponent);
+  public onClose(): void {
+    this.close.emit();
+  }
+
+  public onOpenHelp(helpKey?: string) {
+    this.openHelp.emit(helpKey);
   }
 
   public destroy(): void {
-    SkyModalHostService.modalHosts.splice(SkyModalHostService.modalHosts.indexOf(this));
+    SkyModalHostService.modalHosts.splice(SkyModalHostService.modalHosts.indexOf(this), 1);
   }
 }

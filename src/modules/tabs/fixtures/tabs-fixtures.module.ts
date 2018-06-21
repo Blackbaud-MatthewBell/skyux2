@@ -1,27 +1,35 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+
+import { SkyModalModule } from '../../modal';
 
 import { SkyTabsModule } from '../';
-import { SkyTabsetAdapterService } from '../tabset-adapter.service';
 import { TabsetTestComponent } from './tabset.component.fixture';
-import { MockTabsetAdapterService } from './tabset-adapter.service.mock';
+import { SkyWizardTestFormComponent } from './tabset-wizard.component.fixture';
+import { TabsetActiveTestComponent } from './tabset-active.component.fixture';
 
 @NgModule({
   declarations: [
-    TabsetTestComponent
-  ],
-  providers: [
-    {
-      provide: SkyTabsetAdapterService,
-      useClass: MockTabsetAdapterService
-    }
+    TabsetTestComponent,
+    SkyWizardTestFormComponent,
+    TabsetActiveTestComponent
   ],
   imports: [
     CommonModule,
-    SkyTabsModule
+    FormsModule,
+    SkyModalModule,
+    SkyTabsModule,
+    NoopAnimationsModule
   ],
   exports: [
-    TabsetTestComponent
+    TabsetTestComponent,
+    SkyWizardTestFormComponent,
+    TabsetActiveTestComponent
+  ],
+  entryComponents: [
+    SkyWizardTestFormComponent
   ]
 })
 export class SkyTabsFixturesModule { }

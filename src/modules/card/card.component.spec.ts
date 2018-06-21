@@ -1,12 +1,13 @@
 import {
   TestBed
 } from '@angular/core/testing';
-import { BrowserModule } from '@angular/platform-browser';
 
-import { SkyCardModule } from './card.module';
+import {
+  expect
+} from '@blackbaud/skyux-builder/runtime/testing/browser';
 
+import { SkyCardFixturesModule } from './fixtures/card-fixtures.module';
 import { CardTestComponent } from './fixtures/card.component.fixture';
-import { expect } from '../testing';
 
 function validateCardSelected(cmp: CardTestComponent, cardEl: any, selected: boolean) {
   let selectedEl = cardEl.querySelector('.sky-card.sky-card-selected');
@@ -23,12 +24,8 @@ function validateCardSelected(cmp: CardTestComponent, cardEl: any, selected: boo
 describe('Card component', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-      declarations: [
-        CardTestComponent
-      ],
       imports: [
-        BrowserModule,
-        SkyCardModule
+        SkyCardFixturesModule
       ]
     });
   });
@@ -150,6 +147,22 @@ describe('Card component', () => {
     fixture.detectChanges();
 
     validateCardSelected(cmp, el, true);
+
+    el.querySelector('.sky-card-header').click();
+
+    fixture.detectChanges();
+
+    validateCardSelected(cmp, el, false);
+
+    let labelEl = <HTMLLabelElement>el
+        .querySelector('label.sky-checkbox-wrapper');
+
+    labelEl.click();
+
+    fixture.detectChanges();
+
+    validateCardSelected(cmp, el, true);
+
   });
 
   it('should not allow clicking the card to select it when it is not selectable', () => {
@@ -187,5 +200,39 @@ describe('Card component', () => {
     fixture.detectChanges();
 
     validateCardSelected(cmp, el, false);
+  });
+
+  it('should hide the header properly when title is removed', () => {
+    let html = `
+      <sky-card
+          [selectable]="showCheckbox"
+          [(selected)]="cardSelected"
+      >
+        <sky-card-title *ngIf="showTitle">Title</sky-card-title>
+        <sky-card-content>Content</sky-card-content>
+      </sky-card>
+    `;
+
+    let fixture = TestBed
+      .overrideComponent(
+        CardTestComponent,
+        {
+          set: {
+            template: html
+          }
+        }
+      )
+      .createComponent(CardTestComponent);
+
+    let cmp = fixture.componentInstance as CardTestComponent,
+      el = fixture.nativeElement;
+
+    fixture.detectChanges();
+
+    cmp.showTitle = false;
+    cmp.showCheckbox = false;
+    fixture.detectChanges();
+
+    expect(el.querySelector('.sky-card-header')).toBeNull();
   });
 });

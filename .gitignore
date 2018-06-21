@@ -31,7 +31,9 @@ Thumbs.db
 # Node Files #
 /node_modules
 /bower_components
-npm-debug.log
+npm-debug.log*
+yarn.lock
+package-lock.json
 
 # Coverage #
 /coverage/
@@ -61,6 +63,16 @@ npm-debug.log
 # Allows for quick local testing #
 *.env
 
-/.srctemp
+.srctemp
+.skypagestmp
 webdriver-screenshotslocal*
 browserstack.err
+
+browserstack-binary/BrowserStackLocal
+
+skyux-spa-visual-tests/dist
+skyux-spa-visual-tests/node_modules
+skyux-spa-visual-tests/screenshots-baseline-local
+skyux-spa-visual-tests/screenshots-diff-local
+skyux-spa-visual-tests/screenshots-created-local
+

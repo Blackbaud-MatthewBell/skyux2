@@ -1,6 +1,5 @@
 
 import {
-    ChangeDetectionStrategy,
     Component,
     EventEmitter,
     Input,
@@ -19,26 +18,25 @@ let nextId = 0;
  * Provider Expression that allows sky-checkbox to register as a ControlValueAccessor.
  * This allows it to support [(ngModel)].
  */
-// tslint:disable no-forward-ref
-const SKY_CHECKBOX_CONTROL_VALUE_ACCESSOR: any = {
+// tslint:disable:no-forward-ref no-use-before-declare
+export const SKY_CHECKBOX_CONTROL_VALUE_ACCESSOR: any = {
   provide: NG_VALUE_ACCESSOR,
   useExisting: forwardRef(() => SkyCheckboxComponent),
   multi: true
 };
-// tslint:enable
 
 // A simple change event emitted by the SkyCheckbox component.
 export class SkyCheckboxChange {
   public source: SkyCheckboxComponent;
   public checked: boolean;
 }
+// tslint:enable
 
 @Component({
   selector: 'sky-checkbox',
-  template: require('./checkbox.component.html'),
-  styles: [require('./checkbox.component.scss')],
-  providers: [SKY_CHECKBOX_CONTROL_VALUE_ACCESSOR],
-  changeDetection: ChangeDetectionStrategy.OnPush
+  templateUrl: './checkbox.component.html',
+  styleUrls: ['./checkbox.component.scss'],
+  providers: [SKY_CHECKBOX_CONTROL_VALUE_ACCESSOR]
 })
 export class SkyCheckboxComponent implements ControlValueAccessor {
 
@@ -64,7 +62,7 @@ export class SkyCheckboxComponent implements ControlValueAccessor {
   public tabindex: number = 0;
 
   @Input()
-  public name: string = undefined;
+  public name: string = `sky-checkbox-${++nextId}`;
 
   @Output()
   public change: EventEmitter<SkyCheckboxChange> = new EventEmitter<SkyCheckboxChange>();
@@ -76,6 +74,7 @@ export class SkyCheckboxComponent implements ControlValueAccessor {
   }
 
   /** Called when the checkbox is blurred. Needed to properly implement ControlValueAccessor. */
+  /*istanbul ignore next */
   public onTouched: () => any = () => {};
 
   @Input()
@@ -135,9 +134,9 @@ export class SkyCheckboxComponent implements ControlValueAccessor {
   private _emitChangeEvent() {
     let event = new SkyCheckboxChange();
     event.source = this;
-    event.checked = this.checked;
+    event.checked = this._checked;
 
-    this._controlValueAccessorChangeFn(this.checked);
+    this._controlValueAccessorChangeFn(this._checked);
     this.change.emit(event);
   }
 

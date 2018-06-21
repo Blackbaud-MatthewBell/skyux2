@@ -1,0 +1,33 @@
+<div style="margin-bottom: 20px;">
+  <button
+    type="button"
+    class="sky-btn sky-btn-default"
+    (click)="openOKConfirm()">
+    OK confirm
+  </button>
+
+  <button
+    type="button"
+    class="sky-btn sky-btn-default"
+    (click)="openYesCancelConfirm()">
+    Yes/cancel confirm
+  </button>
+
+  <button
+    type="button"
+    class="sky-btn sky-btn-default"
+    (click)="openYesNoCancelConfirm()">
+    Yes/no/cancel confirm
+  </button>
+
+  <button
+    type="button"
+    class="sky-btn sky-btn-default"
+    (click)="openCustomConfirm()">
+    Custom confirm
+  </button>
+</div>
+
+<sky-alert *ngIf="selectedAction">
+  You selected "{{ selectedAction }}".
+</sky-alert>

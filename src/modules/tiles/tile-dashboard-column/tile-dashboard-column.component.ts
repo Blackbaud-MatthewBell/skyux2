@@ -12,8 +12,8 @@ let columnIdIndex = 0;
 
 @Component({
   selector: 'sky-tile-dashboard-column',
-  styles: [require('./tile-dashboard-column.component.scss')],
-  template: require('./tile-dashboard-column.component.html')
+  styleUrls: ['./tile-dashboard-column.component.scss'],
+  templateUrl: './tile-dashboard-column.component.html'
 })
 export class SkyTileDashboardColumnComponent {
   public bagId: string;
@@ -32,6 +32,6 @@ export class SkyTileDashboardColumnComponent {
 
     this.columnId = 'tile-dashboard-column-' + columnIdIndex;
 
-    this.bagId = dashboardService.bagId;
+    this.bagId = this.dashboardService.bagId;
   }
 }

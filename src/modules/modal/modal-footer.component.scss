@@ -1,0 +1,11 @@
+@import '../../scss/mixins';
+
+.sky-modal-footer-container {
+  background-color: #fff;
+  padding: $sky-padding-plus-half;
+  @include sky-border(light, top);
+  /* Offset the margin-left of the link */
+  /deep/ .sky-btn-link:first-child {
+    margin-left: -12px;
+  }
+}

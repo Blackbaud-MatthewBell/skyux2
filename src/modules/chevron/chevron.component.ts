@@ -2,8 +2,8 @@ import { Component, EventEmitter, Input, Output } from '@angular/core';
 
 @Component({
   selector: 'sky-chevron',
-  styles: [require('./chevron.component.scss')],
-  template: require('./chevron.component.html')
+  styleUrls: ['./chevron.component.scss'],
+  templateUrl: './chevron.component.html'
 })
 export class SkyChevronComponent {
   @Output()
@@ -11,6 +11,9 @@ export class SkyChevronComponent {
 
   @Input()
   public direction = 'up';
+
+  @Input()
+  public disabled: boolean = false;
 
   public chevronClick() {
     this.direction = this.direction === 'up' ? 'down' : 'up';

@@ -1,3 +1,9 @@
-<button type="button" class="sky-btn sky-dropdown-item-btn">
-  <ng-content></ng-content>
-</button>
+<div
+  class="sky-dropdown-item"
+  [ngClass]="{
+    'sky-dropdown-item-active': isActive,
+    'sky-dropdown-item-disabled': isDisabled
+  }">
+  <ng-content>
+  </ng-content>
+</div>

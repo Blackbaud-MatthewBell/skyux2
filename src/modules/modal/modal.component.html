@@ -3,32 +3,48 @@
   https://github.com/angular/angular/issues/10245
 -->
 <!--<div @modalState="modalState">-->
-<div>
-  <div
-      class="sky-modal"
-      [ngStyle]="{
-        zIndex: modalZIndex
+
+<div
+  class="sky-modal-dialog"
+  role="dialog"
+  [attr.aria-describedby]="ariaDescribedBy"
+  [attr.aria-labelledby]="ariaLabelledBy"
+  (window:resize)="windowResize()"
+>
+  <div class="sky-modal sky-shadow"
+    tabindex="-1"
+    [ngClass]="{
+      'sky-modal-full-page': modalFullPage,
+      'sky-modal-small' : isSmallSize,
+      'sky-modal-medium' : isMediumSize,
+      'sky-modal-large' : isLargeSize,
+      'sky-modal-tiled' : isTiledBody
       }"
-  >
-    <div class="sky-modal-header">
-      <div class="sky-modal-header-content">
+    [ngStyle]="{
+        zIndex: modalZIndex
+      }">
+
+    <div class="sky-modal-header" [hidden]="!headerContent || !headerContent.children || headerContent.children.length < 1">
+      <div [attr.id]="modalHeaderId" class="sky-modal-header-content"  #headerContent>
         <ng-content select="sky-modal-header"></ng-content>
       </div>
       <div class="sky-modal-header-buttons">
-        <button
-            type="button"
-            class="sky-btn sky-modal-btn-close"
-            (click)="closeButtonClick()"
-        >
+        <button *ngIf="helpKey" type="button" class="sky-btn" name="help-button" [attr.aria-label]="'open_help' | skyResources" (click)="helpButtonClick()">
+          <i class="fa fa-question-circle"></i>
+        </button>
+
+        <button type="button" class="sky-btn sky-modal-btn-close" [attr.aria-label]="'modal_close' | skyResources" (click)="closeButtonClick()">
+
           <i class="fa fa-close"></i>
         </button>
       </div>
+
     </div>
-    <div class="sky-modal-content">
+    <div [attr.id]="modalContentId" class="sky-modal-content">
       <ng-content select="sky-modal-content"></ng-content>
     </div>
     <div class="sky-modal-footer">
       <ng-content select="sky-modal-footer"></ng-content>
     </div>
-  </div>
+</div>
 </div>

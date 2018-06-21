@@ -1,15 +1,28 @@
 <a
     class="sky-btn-tab"
     [ngClass]="{
-      'sky-btn-tab-selected': active
+      'sky-btn-tab-wizard': tabStyle === 'wizard',
+      'sky-btn-tab-selected': active,
+      'sky-btn-tab-disabled': disabled,
+      'sky-tab-btn-closeable': allowClose
     }"
-    (click)="tabClick.emit()"
+    tabindex="0"
+    (keydown)="keyDownFunction($event)"
+    (click)="doTabClick()"
     role="tab"
+    [attr.aria-selected]="active"
 >
   {{tabHeading}}
+  <span
+    class="sky-tab-header-count"
+    *ngIf="tabHeaderCount || tabHeaderCount === 0"
+  >
+    {{tabHeaderCount}}
+  </span>
   <button
       type="button"
       class="sky-btn-tab-close"
+      [attr.aria-label]="'tab_close' | skyResources"
       *ngIf="allowClose"
       (click)="doCloseClick();$event.stopPropagation()"
   >

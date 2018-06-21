@@ -8,21 +8,35 @@ import { DragulaService } from 'ng2-dragula/ng2-dragula';
 
 import {
   MockDragulaService,
-  MockSkyMediaQueryService,
   Tile1TestComponent,
   Tile2TestComponent,
-  TileDashboardTestComponent
+  TileDashboardTestComponent,
+  TileTestContext
 } from './fixtures';
-import { SkyMediaQueryService } from '../../media-queries';
+import { SkyMediaQueryService, SkyMediaBreakpoints } from '../../media-queries';
 import { SkyTileDashboardConfig } from '../tile-dashboard-config';
+import { SkyTileDashboardComponent } from './tile-dashboard.component';
 import { SkyTileDashboardService } from './tile-dashboard.service';
 import { SkyTilesModule } from '../tiles.module';
 import { SkyTileDashboardFixturesModule } from './fixtures/tile-dashboard-fixtures.module';
+import { MockSkyMediaQueryService } from '../../testing/mocks';
 
 describe('Tile dashboard service', () => {
   let dashboardConfig: SkyTileDashboardConfig;
   let mockDragulaService: DragulaService;
   let mockMediaQueryService: MockSkyMediaQueryService;
+
+  function createDashboardTestComponent() {
+    return TestBed
+      .overrideComponent(SkyTileDashboardComponent, {
+        add: {
+          providers: [
+            {provide: SkyMediaQueryService, useValue: mockMediaQueryService}
+          ]
+        }
+      })
+      .createComponent(TileDashboardTestComponent);
+  }
 
   beforeEach(() => {
     mockDragulaService = new MockDragulaService();
@@ -89,7 +103,7 @@ describe('Tile dashboard service', () => {
   it('should emit the config change event when a tile is moved',
     fakeAsync(
       () => {
-        let fixture = TestBed.createComponent(TileDashboardTestComponent);
+        let fixture = createDashboardTestComponent();
         let dashboardService = fixture.componentInstance.dashboardComponent.dashboardService;
         let configChanged = false;
 
@@ -100,23 +114,31 @@ describe('Tile dashboard service', () => {
             let expectedConfig: SkyTileDashboardConfig = {
               tiles: [
                 {
-                  id: 'tile1',
+                  id: 'sky-test-tile-1',
                   componentType: Tile1TestComponent
                 },
                 {
-                  id: 'tile2',
-                  componentType: Tile2TestComponent
+                  id: 'sky-test-tile-2',
+                  componentType: Tile2TestComponent,
+                  providers: [
+                    {
+                      provide: TileTestContext,
+                      useValue: {
+                        id: 3
+                      }
+                    }
+                  ]
                 }
               ],
               layout: {
                 singleColumn: {
                   tiles: [
                     {
-                      id: 'tile2',
+                      id: 'sky-test-tile-2',
                       isCollapsed: false
                     },
                     {
-                      id: 'tile1',
+                      id: 'sky-test-tile-1',
                       isCollapsed: true
                     }
                   ]
@@ -128,11 +150,11 @@ describe('Tile dashboard service', () => {
                   {
                     tiles: [
                       {
-                        id: 'tile2',
+                        id: 'sky-test-tile-2',
                         isCollapsed: false
                       },
                       {
-                        id: 'tile1',
+                        id: 'sky-test-tile-1',
                         isCollapsed: true
                       }
                     ]
@@ -152,7 +174,7 @@ describe('Tile dashboard service', () => {
 
         let columnEls = el.querySelectorAll('.sky-tile-dashboard-column');
 
-        columnEls[1].appendChild(columnEls[0].querySelector('sky-test-cmp'));
+        columnEls[1].appendChild(columnEls[0].querySelector('div.sky-test-tile-1'));
 
         mockDragulaService.drop.emit({});
         tick();
@@ -178,11 +200,12 @@ describe('Tile dashboard service', () => {
       }
     );
 
-    /* tslint:disable-next-line:no-unused-variable */
-    let testDashboardService = new SkyTileDashboardService(
-      mockDragulaService,
-      mockMediaQueryService
-    );
+    (function () {
+      return new SkyTileDashboardService(
+        mockDragulaService,
+        mockMediaQueryService
+      );
+    }());
 
     expect(setOptionsSpy).toHaveBeenCalled();
   });
@@ -282,9 +305,9 @@ describe('Tile dashboard service', () => {
         return columnEl.querySelectorAll('sky-tile').length;
       }
 
-      let fixture = TestBed.createComponent(TileDashboardTestComponent);
+      let fixture = createDashboardTestComponent();
 
-      mockMediaQueryService.matches = true;
+      mockMediaQueryService.current = SkyMediaBreakpoints.sm;
 
       let el = fixture.nativeElement;
 
@@ -307,7 +330,7 @@ describe('Tile dashboard service', () => {
         return columnEl.querySelectorAll('sky-tile').length;
       }
 
-      let fixture = TestBed.createComponent(TileDashboardTestComponent);
+      let fixture = createDashboardTestComponent();
 
       let el = fixture.nativeElement;
 
@@ -321,9 +344,7 @@ describe('Tile dashboard service', () => {
       expect(getTileCount(multiColumnEls[1])).toBe(1);
       expect(getTileCount(singleColumnEl)).toBe(0);
 
-      mockMediaQueryService.fire({
-        matches: true
-      });
+      mockMediaQueryService.fire(SkyMediaBreakpoints.xs);
 
       fixture.detectChanges();
 
@@ -331,9 +352,7 @@ describe('Tile dashboard service', () => {
       expect(getTileCount(multiColumnEls[1])).toBe(0);
       expect(getTileCount(singleColumnEl)).toBe(2);
 
-      mockMediaQueryService.fire({
-        matches: false
-      });
+      mockMediaQueryService.fire(SkyMediaBreakpoints.md);
 
       fixture.detectChanges();
 
@@ -346,18 +365,16 @@ describe('Tile dashboard service', () => {
   it(
     'should return the expected config regardless of which column mode is active',
     fakeAsync(() => {
-      let fixture = TestBed.createComponent(TileDashboardTestComponent);
+      let fixture = createDashboardTestComponent();
 
-      let cmp = fixture.componentInstance as TileDashboardTestComponent;
+      let cmp = fixture.componentInstance;
 
       let expectedDashboardConfig = cmp.dashboardConfig;
 
       fixture.detectChanges();
       tick();
 
-      mockMediaQueryService.fire({
-        matches: true
-      });
+      mockMediaQueryService.fire(SkyMediaBreakpoints.xs);
 
       mockDragulaService.drop.emit({});
 
@@ -366,9 +383,7 @@ describe('Tile dashboard service', () => {
 
       expect(cmp.dashboardConfig).toEqual(expectedDashboardConfig);
 
-      mockMediaQueryService.fire({
-        matches: false
-      });
+      mockMediaQueryService.fire(SkyMediaBreakpoints.lg);
 
       mockDragulaService.drop.emit({});
 
@@ -389,11 +404,9 @@ describe('Tile dashboard service', () => {
   it(
     'should release resources when destroyed',
     inject([SkyTileDashboardService], (dashboardService: SkyTileDashboardService) => {
-      let destroySpy = spyOn(mockMediaQueryService, 'destroy');
-
       dashboardService.destroy();
 
-      expect(destroySpy).toHaveBeenCalled();
+      expect(mockMediaQueryService.currentMockSubject.observers.length).toBe(0);
     })
   );
 });

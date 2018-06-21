@@ -1,24 +1,20 @@
 # SKY UX 2
 
-An alpha version of SKY UX 2 built on Angular 2 is now available.  It can be installed via NPM (we recommend NPM version 3 for its flat dependency structure):
+[![npm](https://img.shields.io/npm/v/@blackbaud/skyux.svg)](https://www.npmjs.com/package/@blackbaud/skyux)
+[![status](https://travis-ci.org/blackbaud/skyux2.svg?branch=master)](https://travis-ci.org/blackbaud/skyux2)
 
-`npm install blackbaud-skyux2`
+SKY UX 2 provides Angular components, services, and modules to create user interfaces, and it takes advantage of Angular for tooling, testing, and performance. The SKY UX Builder developer tool provides for a rapid development process with minimal setup for developers to create single-page applications.
 
-We're still working on documentation, but we do have rudimentary examples available in the SKY UX 2 repo.  To run them, clone this repo locally, then run `npm install` followed by `npm start`.  This will serve up the examples at [http://localhost:3000/](http://localhost:3000/).  If you plan on contributing SKY UX 2 you may use the NPM scripts below to test and build your feature.
+For guidance on how to install the command line interface for SKY UX Builder, see [the initial setup section of the SKY UX website](https://developer.blackbaud.com/skyux/learn/get-started/prereqs/initial-setup).
 
-`npm install` and `npm start` are special commands.  All other commands listed below should use the `npm run COMMAND` format.  For example, `npm run build`.
+To install just the SKY UX components without any additional features, use the following NPM command. We recommend NPM version 3+ for its flat dependency structure.
 
-## Available NPM scripts
+`npm install @blackbaud/skyux`
 
-Script      | Description
------------ | -----------
-build       | Cleans the previous build, compiles the Sass, and transpiles the JavaScript.
-clean       | Cleans the previous build.
-clean:full  | Cleans the previous build, node_modules, and coverage reports.
-lint        | Run TypeScript linter.
-test        | Run unit tests and visual regression tests.
-test:unit   | Run Karma unit tests.
-test:visual | Run Webdriver visual regression tests.
-start       | Serves the components at [http://localhost:3000](http://localhost:3000) for debugging.
-start:visual| Serves the visual fixtures at [http://localhost:3000](http://localhost:3000) for debugging.
-watch       | Run Karma unit tests and watch for file changes.
+For documentation on the SKY UX components, see [the Components section of the SKY UX website](https://developer.blackbaud.com/skyux/components).
+
+## Contributing
+
+We highly encourage contributions from all SKY UX users. We just ask you to follow the coding conventions in the existing code and to write the appropriate unit tests for your features.
+
+For information about how to contribute, see the [SKY UX contribution guidelines](https://github.com/blackbaud/skyux2/blob/master/CONTRIBUTING.md).

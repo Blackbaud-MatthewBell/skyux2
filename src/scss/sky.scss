@@ -1,8 +1,17 @@
-// Google Fonts
-@import url("//fonts.googleapis.com/css?family=Open+Sans:300,400,600,700,400italic|Oswald:300,400,700");
+/* Font Awesome */
+@import url("https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css");
 
-@import '../../node_modules/normalize-scss/sass/normalize/import-now';
+@import 'fonts';
 
-@import 'theme';
+@import '~normalize-scss/sass/normalize/import-now';
+
 @import 'buttons';
 @import 'dragdrop';
+@import 'dropdowns';
+@import 'forms';
+@import 'input-groups';
+@import 'modals';
+@import 'palette';
+@import 'theme';
+@import 'type';
+

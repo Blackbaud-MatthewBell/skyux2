@@ -14,8 +14,12 @@ module.exports = function (config) {
     files: [{
       pattern: '../utils/spec-bundle.js',
       watched: false
+    }, {
+      pattern: '../utils/spec-styles.js',
+      watched: false
     }],
     preprocessors: {
+      '../utils/spec-styles.js': ['webpack'],
       '../utils/spec-bundle.js': ['coverage', 'webpack', 'sourcemap']
     },
     webpack: testWebpackConfig,
@@ -37,6 +41,14 @@ module.exports = function (config) {
     colors: true,
     logLevel: config.LOG_INFO,
     autoWatch: false,
-    singleRun: true
+    singleRun: true,
+    browserDisconnectTimeout: 3e5,
+    browserDisconnectTolerance: 3,
+    browserNoActivityTimeout: 3e5,
+    captureTimeout: 3e5,
+    browserConsoleLogOptions: {
+      level: 'log',
+      terminal: true
+    }
   });
 };

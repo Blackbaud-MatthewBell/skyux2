@@ -1,0 +1,11 @@
+<div
+  class="sky-filter-summary-item"
+  (click)="onItemClick()"
+  (keypress.enter)="onItemKeypress()">
+  <sky-token
+    [dismissible]="dismissible"
+    (dismiss)="onItemDismiss()">
+    <ng-content>
+    </ng-content>
+  </sky-token>
+</div>

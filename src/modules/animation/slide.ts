@@ -1,14 +1,20 @@
+// #region imports
 import {
-  trigger,
+  AnimationEntryMetadata
+} from '@angular/core';
+
+import {
+  animate,
   state,
   style,
   transition,
-  animate
-} from '@angular/core';
+  trigger
+} from '@angular/animations';
+// #endregion
 
-export default trigger('slide', [
+export const skyAnimationSlide = trigger('skyAnimationSlide', [
   state('down', style({
-    overflow: 'hidden',
+    overflow: 'visible',
     height: '*'
   })),
   state('up', style({
@@ -19,4 +25,4 @@ export default trigger('slide', [
     'up <=> down',
     animate('150ms ease-in')
   )
-]) as any;
+]) as AnimationEntryMetadata;

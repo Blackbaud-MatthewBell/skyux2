@@ -10,8 +10,8 @@ import { SkyTabComponent } from './tab.component';
 
 @Component({
   selector: 'sky-tab-dropdown',
-  template: require('./tab-dropdown.component.html'),
-  styles: [require('./tab-dropdown.component.scss')]
+  templateUrl: './tab-dropdown.component.html',
+  styleUrls: ['./tab-dropdown.component.scss']
 })
 export class SkyTabDropdownComponent {
   @Input()
@@ -32,10 +32,15 @@ export class SkyTabDropdownComponent {
     if (activeTab.length > 0) {
       return activeTab[0].tabHeading;
     }
+    /* istanbul ignore next */
+    /* sanity check */
+    return '';
   }
 
   public selectTab(tab: SkyTabComponent) {
-    this.tabClick.emit(tab);
+    if (!tab.disabled) {
+      this.tabClick.emit(tab);
+    }
   }
 
   public closeTab(tab: SkyTabComponent) {

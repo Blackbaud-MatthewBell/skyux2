@@ -6,9 +6,16 @@ import {
   DoCheck,
   ElementRef,
   EventEmitter,
+  Input,
+  OnDestroy,
   Output,
-  QueryList
+  QueryList,
+  ChangeDetectorRef,
+  SimpleChanges,
+  OnChanges
 } from '@angular/core';
+
+import 'rxjs/add/operator/distinctUntilChanged';
 
 import { SkyTabComponent } from './tab.component';
 import { SkyTabsetAdapterService } from './tabset-adapter.service';
@@ -16,51 +23,38 @@ import { SkyTabsetService } from './tabset.service';
 
 @Component({
   selector: 'sky-tabset',
-  styles: [require('./tabset.component.scss')],
-  template: require('./tabset.component.html')
+  styleUrls: ['./tabset.component.scss'],
+  templateUrl: './tabset.component.html',
+  providers: [SkyTabsetAdapterService, SkyTabsetService]
 })
-export class SkyTabsetComponent implements AfterContentInit, AfterViewInit, DoCheck {
+export class SkyTabsetComponent
+  implements AfterContentInit, AfterViewInit, DoCheck, OnDestroy, OnChanges {
+  @Input()
+  public tabStyle = 'tabs';
+
+  @Input()
+  public active: number | string;
+
   @Output()
   public newTab = new EventEmitter<any>();
 
   @Output()
   public openTab = new EventEmitter<any>();
 
+  @Output()
+  public activeChange = new EventEmitter<any>();
+
   public tabDisplayMode = 'tabs';
 
   @ContentChildren(SkyTabComponent)
-  private tabs: QueryList<SkyTabComponent>;
+  public tabs: QueryList<SkyTabComponent>;
 
   constructor(
     private tabsetService: SkyTabsetService,
     private adapterService: SkyTabsetAdapterService,
-    private elRef: ElementRef
+    private elRef: ElementRef,
+    private changeRef: ChangeDetectorRef
   ) {
-    tabsetService.tabDestroy.subscribe((tab: SkyTabComponent) => {
-      if (tab.active) {
-        let tabs = this.tabs.toArray();
-        let tabIndex = tabs.indexOf(tab);
-
-        // Try selecting the next tab first, and if there's no next tab then
-        // try selecting the previous one.
-        let newActiveTab = tabs[tabIndex + 1] || tabs[tabIndex - 1];
-
-        /*istanbul ignore else */
-        if (newActiveTab) {
-          this.selectTab(newActiveTab);
-        }
-      }
-    });
-  }
-
-  public selectTab(tab: SkyTabComponent) {
-    this.tabs.forEach((existingTab) => {
-      if (tab !== existingTab) {
-        existingTab.active = false;
-      }
-    });
-
-    tab.active = true;
   }
 
   public tabCloseClick(tab: SkyTabComponent) {
@@ -79,13 +73,31 @@ export class SkyTabsetComponent implements AfterContentInit, AfterViewInit, DoCh
     this.adapterService.detectOverflow();
   }
 
+  public selectTab(newTab: SkyTabComponent) {
+    this.tabsetService.activateTab(newTab);
+  }
+
+  public ngOnChanges(changes: SimpleChanges) {
+    if (changes['active'] && changes['active'].currentValue !== changes['active'].previousValue) {
+      this.tabsetService.activateTabIndex(this.active);
+    }
+
+  }
+
   public ngAfterContentInit() {
-    this.tabsetService.tabActivate.subscribe((tab: SkyTabComponent) => {
-      // HACK: Not selecting the active tab in a timeout causes an error.
-      // https://github.com/angular/angular/issues/6005
-      setTimeout(() => {
-        this.selectTab(tab);
-      }, 0);
+    if (this.active || this.active === 0) {
+      this.tabsetService.activateTabIndex(this.active);
+    }
+    this.tabsetService.activeIndex.distinctUntilChanged().subscribe((newActiveIndex) => {
+
+         // HACK: Not selecting the active tab in a timeout causes an error.
+        // https://github.com/angular/angular/issues/6005
+        setTimeout(() => {
+          if (newActiveIndex !== this.active) {
+            this.active = newActiveIndex;
+            this.activeChange.emit(newActiveIndex);
+          }
+        });
     });
   }
 
@@ -93,11 +105,13 @@ export class SkyTabsetComponent implements AfterContentInit, AfterViewInit, DoCh
     this.adapterService.init(this.elRef);
 
     this.adapterService.overflowChange.subscribe((currentOverflow: boolean) => {
-      this.updateDisplayMode();
+      this.updateDisplayMode(currentOverflow);
     });
 
     setTimeout(() => {
-      this.updateDisplayMode();
+      this.adapterService.detectOverflow();
+      this.updateDisplayMode(this.adapterService.currentOverflow);
+      this.changeRef.detectChanges();
     }, 0);
   }
 
@@ -105,7 +119,11 @@ export class SkyTabsetComponent implements AfterContentInit, AfterViewInit, DoCh
     this.adapterService.detectOverflow();
   }
 
-  private updateDisplayMode() {
-    this.tabDisplayMode = this.adapterService.currentOverflow ? 'dropdown' : 'tabs';
+  public ngOnDestroy() {
+    this.tabsetService.destroy();
+  }
+
+  private updateDisplayMode(currentOverflow: boolean) {
+    this.tabDisplayMode = currentOverflow ? 'dropdown' : 'tabs';
   }
 }

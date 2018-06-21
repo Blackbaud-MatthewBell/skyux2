@@ -35,7 +35,6 @@ describe('Alert component', () => {
     expect(closeAttrs['hidden']).toBe(undefined);
 
     cmp.closeable = false;
-
     fixture.detectChanges();
 
     expect(closeAttrs['hidden']).not.toBeNull();
@@ -97,5 +96,19 @@ describe('Alert component', () => {
     let alertEl = el.querySelector('.sky-alert');
 
     expect(alertEl.classList.contains('sky-alert-warning')).toBe(true);
+  });
+
+  it('should have a role of "alert"', () => {
+    let fixture = TestBed.createComponent(AlertTestComponent);
+    let cmp = fixture.componentInstance as AlertTestComponent;
+    let el = fixture.nativeElement as HTMLElement;
+
+    cmp.alertType = undefined;
+
+    fixture.detectChanges();
+
+    let alertEl = el.querySelector('.sky-alert');
+
+    expect(alertEl.getAttribute('role')).toBe('alert');
   });
 });

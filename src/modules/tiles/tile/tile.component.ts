@@ -1,5 +1,4 @@
 import {
-  AfterViewInit,
   Component,
   ElementRef,
   EventEmitter,
@@ -8,23 +7,26 @@ import {
   Output
 } from '@angular/core';
 
-import slideAnimation from '../../animation/slide';
-import { SkyTileDashboardService } from './../tile-dashboard';
+import { skyAnimationSlide } from '../../animation/slide';
+import { SkyTileDashboardService } from '../tile-dashboard/tile-dashboard.service';
 
 @Component({
   selector: 'sky-tile',
-  styles: [require('./tile.component.scss')],
-  template: require('./tile.component.html'),
-  animations: [slideAnimation]
+  styleUrls: ['./tile.component.scss'],
+  templateUrl: './tile.component.html',
+  animations: [skyAnimationSlide]
 })
-export class SkyTileComponent implements AfterViewInit {
+export class SkyTileComponent {
   public isInDashboardColumn = false;
+
+  @Input()
+  public showSettings: boolean = true;
 
   @Output()
   public settingsClick = new EventEmitter();
 
   @Output()
-  public collapsedStateChange = new EventEmitter<boolean>();
+  public isCollapsedChange = new EventEmitter<boolean>();
 
   public get isCollapsed(): boolean {
     if (this.dashboardService) {
@@ -42,28 +44,24 @@ export class SkyTileComponent implements AfterViewInit {
       this._isCollapsed = value;
     }
 
-    if (this.viewInitialized) {
-      this.slideForCollapsed(true);
-    }
+    this.isCollapsedChange.emit(value);
   }
 
   private _isCollapsed = false;
 
-  private viewInitialized = false;
+  constructor(
+    public elementRef: ElementRef,
+    @Optional() private dashboardService: SkyTileDashboardService
+  ) {
+    this.isInDashboardColumn = !!dashboardService;
+  }
 
   public settingsButtonClicked() {
     this.settingsClick.emit(undefined);
   }
 
   public get hasSettings(): boolean {
-    return this.settingsClick.observers.length > 0;
-  }
-
-  constructor(
-    @Optional() private dashboardService: SkyTileDashboardService,
-    public elementRef: ElementRef
-  ) {
-    this.isInDashboardColumn = !!dashboardService;
+    return this.settingsClick.observers.length > 0 && this.showSettings;
   }
 
   public titleClick() {
@@ -72,18 +70,5 @@ export class SkyTileComponent implements AfterViewInit {
 
   public chevronDirectionChange(direction: string) {
     this.isCollapsed = direction === 'down';
-  }
-
-  public ngAfterViewInit() {
-    this.viewInitialized = true;
-
-    if (this.isCollapsed) {
-      this.slideForCollapsed(false);
-    }
-  }
-
-  private slideForCollapsed(animate: boolean) {
-    // let direction = this.isCollapsed ? 'up' : 'down';
-    // this.slideService.slide(this.elementRef, '.sky-tile-content', direction, animate);
   }
 }

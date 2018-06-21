@@ -1,23 +1,10 @@
 {
+  "extends": "./node_modules/@blackbaud/skyux-builder/tsconfig",
   "compilerOptions": {
-    "target": "es5",
-    "module": "commonjs",
-    "emitDecoratorMetadata": true,
-    "experimentalDecorators": true,
-    "sourceMap": true,
-    "noEmitHelpers": true,
-    "noImplicitAny": true
+    "module": "commonjs"
   },
   "exclude": [
     "node_modules",
-    "typings/main.d.ts",
-    "typings/main"
-  ],
-  "awesomeTypescriptLoaderOptions": {
-    "resolveGlobs": true,
-    "forkChecker": true
-  },
-  "compileOnSave": false,
-  "buildOnSave": false,
-  "atom": { "rewriteTsconfig": false }
+    "skyux-spa-visual-tests"
+  ]
 }

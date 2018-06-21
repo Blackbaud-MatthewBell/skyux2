@@ -1,0 +1,33 @@
+<div class="sky-container">
+  <br>
+
+  <sky-alert>
+    This site provides SKY UX component demos useful for contributors. <a href="https://developer.blackbaud.com/skyux">Visit the official documentation &rarr;</a>.
+  </sky-alert>
+
+  <h1>
+    Component demos
+  </h1>
+
+  <div class="demo-selection-dropdown">
+    <sky-dropdown>
+      <sky-dropdown-button>
+        Select a demo
+      </sky-dropdown-button>
+      <sky-dropdown-menu>
+        <sky-dropdown-item
+          *ngFor="let component of components">
+          <button
+            type="button"
+            (click)="open(component)">
+            {{ component.name }}
+          </button>
+        </sky-dropdown-item>
+      </sky-dropdown-menu>
+    </sky-dropdown>
+  </div>
+
+  <sky-demo-generator
+    [componentData]="selectedComponent">
+  </sky-demo-generator>
+</div>

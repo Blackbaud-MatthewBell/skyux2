@@ -5,6 +5,10 @@ import {
   tick
 } from '@angular/core/testing';
 
+import {
+  expect
+} from '@blackbaud/skyux-builder/runtime/testing/browser';
+
 import { SkyTileDashboardColumnComponent } from '../tile-dashboard-column';
 import { SkyTileDashboardComponent } from './tile-dashboard.component';
 import { SkyTileDashboardConfig } from '../tile-dashboard-config';
@@ -15,11 +19,11 @@ import {
   SkyTileDashboardFixturesModule,
   Tile1TestComponent,
   Tile2TestComponent,
-  TileDashboardTestComponent
+  TileDashboardTestComponent,
+  TileDashboardOnPushTestComponent
 } from './fixtures';
 
-// TODO: Revisit after RC6.
-xdescribe('Tile dashboard component', () => {
+describe('Tile dashboard component', () => {
   let mockTileDashboardService: MockTileDashboardService;
 
   beforeEach(() => {
@@ -48,8 +52,6 @@ xdescribe('Tile dashboard component', () => {
   });
 
   it('should update tile order when tile moves within a column', fakeAsync(() => {
-    // TODO: This should work but doesn't.  Revisit for Angular 2 RC6.
-    // https://github.com/angular/angular/issues/10854
     let fixture = TestBed
       .overrideComponent(
         SkyTileDashboardComponent,
@@ -119,7 +121,22 @@ xdescribe('Tile dashboard component', () => {
   }));
 
   it('should not allow a new config to be set by the parent once initialized', fakeAsync(() => {
-    let fixture = TestBed.createComponent(TileDashboardTestComponent);
+    let fixture = TestBed
+      .overrideComponent(
+        SkyTileDashboardComponent,
+        {
+          add: {
+            providers: [
+              {
+                provide: SkyTileDashboardService,
+                useValue: mockTileDashboardService
+              }
+            ]
+          }
+        }
+      )
+      .createComponent(TileDashboardTestComponent);
+
     let cmp = fixture.componentInstance;
     let initialConfig = cmp.dashboardConfig;
     let newConfig: SkyTileDashboardConfig = {
@@ -229,7 +246,22 @@ xdescribe('Tile dashboard component', () => {
   it(
     `should release resources when the component is destroyed`,
     () => {
-      let fixture = TestBed.createComponent(TileDashboardTestComponent);
+      let fixture = TestBed
+        .overrideComponent(
+          SkyTileDashboardComponent,
+          {
+            add: {
+              providers: [
+                {
+                  provide: SkyTileDashboardService,
+                  useValue: mockTileDashboardService
+                }
+              ]
+            }
+          }
+        )
+        .createComponent(TileDashboardTestComponent);
+
       let destroySpy = spyOn(mockTileDashboardService, 'destroy');
 
       fixture.destroy();
@@ -259,6 +291,50 @@ xdescribe('Tile dashboard component', () => {
       let tileEls = el.querySelectorAll('.sky-tile-dashboard-column');
 
       expect(tileEls[0].offsetWidth).toEqual(tileEls[1].offsetWidth);
+    })
+  );
+
+  it(
+    `should allow context to be provided to a tile`,
+    fakeAsync(() => {
+      let fixture = TestBed.createComponent(TileDashboardTestComponent);
+
+      fixture.detectChanges();
+      tick();
+
+      let cmp = fixture.componentInstance;
+
+      let tileComponentRef = cmp
+        .dashboardComponent
+        .dashboardService
+        .getTileComponent('sky-test-tile-2');
+
+      expect(tileComponentRef.instance.context.id).toBe(3);
+    })
+  );
+
+  it(
+    `should render tiles properly when the parent component's change detection strategy is OnPush`,
+    fakeAsync(() => {
+      let fixture = TestBed.createComponent(TileDashboardOnPushTestComponent);
+
+      fixture.detectChanges();
+      tick();
+
+      // For some reason we have to run change detection twice for the tile to actually render.
+      fixture.detectChanges();
+      tick();
+
+      let cmp = fixture.componentInstance;
+
+      let tileComponentRef = cmp
+        .dashboardComponent
+        .dashboardService
+        .getTileComponent('sky-test-tile-1');
+
+      let tileEl = tileComponentRef.location.nativeElement;
+
+      expect(tileEl.querySelector('.sky-tile-title')).toHaveText('Tile 1');
     })
   );
 });

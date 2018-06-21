@@ -1,6 +1,5 @@
 <section
     class="sky-tile"
-    [attr.sky-tile-id]="tileId"
     [ngClass]="{
       'sky-tile-collapsed': isCollapsed
     }"
@@ -25,6 +24,7 @@
             type="button"
             *ngIf="hasSettings"
             class="sky-tile-settings fa fa-cog"
+            [attr.aria-label]="'tile_settings' | skyResources"
             (click)="settingsButtonClicked();"
         >
         </button>
@@ -36,7 +36,7 @@
       </div>
     </div>
   </header>
-  <div class="sky-tile-content" [@slide]="isCollapsed ? 'up' : 'down'">
+  <div class="sky-tile-content" [@skyAnimationSlide]="isCollapsed ? 'up' : 'down'">
     <ng-content select="sky-tile-content"></ng-content>
   </div>
 </section>

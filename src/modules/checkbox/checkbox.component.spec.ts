@@ -13,6 +13,98 @@ import {By} from '@angular/platform-browser';
 import {SkyCheckboxComponent, SkyCheckboxChange} from './checkbox.component';
 import { SkyCheckboxModule } from './checkbox.module';
 
+/** Simple component for testing a single checkbox. */
+@Component({
+  template: `
+  <div>
+    <sky-checkbox
+        id="simple-check"
+        [checked]="isChecked"
+        [disabled]="isDisabled"
+        (change)="checkboxChange($event)">
+      <sky-checkbox-label>
+        Simple checkbox
+      </sky-checkbox-label>
+    </sky-checkbox>
+  </div>`
+})
+class SingleCheckboxComponent {
+  public isChecked: boolean = false;
+  public isDisabled: boolean = false;
+
+  public checkboxChange($event: any) {
+    this.isChecked = $event.checked;
+  }
+}
+
+/** Simple component for testing an MdCheckbox with ngModel. */
+@Component({
+  template: `
+  <div>
+    <form>
+      <sky-checkbox name="cb" [(ngModel)]="isGood" #wut>
+        <sky-checkbox-label>
+          Be good
+        </sky-checkbox-label>
+      </sky-checkbox>
+    </form>
+  </div>
+  `
+})
+class CheckboxWithFormDirectivesComponent {
+  public isGood: boolean = false;
+}
+
+/** Simple test component with multiple checkboxes. */
+@Component(({
+  template: `
+    <sky-checkbox>
+      <sky-checkbox-label>
+        Option 1
+      </sky-checkbox-label>
+    </sky-checkbox>
+    <sky-checkbox>Option 2</sky-checkbox>
+  `
+}))
+class MultipleCheckboxesComponent { }
+
+/** Simple test component with tabIndex */
+@Component({
+  template: `
+    <sky-checkbox [tabindex]="customTabIndex" [disabled]="isDisabled">
+    </sky-checkbox>`
+})
+class CheckboxWithTabIndexComponent {
+  public customTabIndex: number = 7;
+  public isDisabled: boolean = false;
+}
+
+/** Simple test component with an aria-label set. */
+@Component({
+  template: `<sky-checkbox label="Super effective"></sky-checkbox>`
+})
+class CheckboxWithAriaLabelComponent { }
+
+/** Simple test component with an aria-label set. */
+@Component({
+  template: `<sky-checkbox labelledBy="some-id"></sky-checkbox>`
+})
+class CheckboxWithAriaLabelledbyComponent {}
+
+/** Simple test component with name attribute */
+@Component({
+  template: `<sky-checkbox name="test-name"></sky-checkbox>`
+})
+class CheckboxWithNameAttributeComponent {}
+
+/** Simple test component with change event */
+@Component({
+  template: `<sky-checkbox (change)="lastEvent = $event"></sky-checkbox>`
+})
+class CheckboxWithChangeEventComponent {
+  public lastEvent: SkyCheckboxChange;
+}
+
 describe('Checkbox component', () => {
   let fixture: ComponentFixture<any>;
 
@@ -319,27 +411,39 @@ describe('Checkbox component', () => {
   });
 
   describe('with ngModel', () => {
+    let checkboxElement: DebugElement;
+    let testComponent: CheckboxWithFormDirectivesComponent;
+    let inputElement: HTMLInputElement;
+    let checkboxNativeElement: HTMLElement;
+    let ngModel: NgModel;
+    let labelElement: HTMLLabelElement;
+
     beforeEach(async(() => {
       fixture = TestBed.createComponent(CheckboxWithFormDirectivesComponent);
-
       fixture.detectChanges();
+
+      fixture.whenStable().then(() => {
+        checkboxElement = fixture.debugElement.query(By.directive(SkyCheckboxComponent));
+        checkboxNativeElement = checkboxElement.nativeElement;
+
+        testComponent = fixture.debugElement.componentInstance;
+        inputElement = <HTMLInputElement>checkboxNativeElement.querySelector('input');
+        ngModel = <NgModel> checkboxElement.injector.get(NgModel);
+        labelElement =
+          <HTMLLabelElement>checkboxElement
+            .nativeElement.querySelector('label.sky-checkbox-wrapper');
+      });
     }));
 
     it('should be in pristine, untouched, and valid states initially', async(() => {
-
-      let checkboxElement = fixture.debugElement.query(By.directive(SkyCheckboxComponent));
-      let ngModel = <NgModel> checkboxElement.injector.get(NgModel);
-      let labelElement =
-          <HTMLLabelElement>checkboxElement
-            .nativeElement.querySelector('label.sky-checkbox-wrapper');
-      let inputElement = checkboxElement.nativeElement.querySelector('input');
-      let testComponent = fixture.debugElement.componentInstance;
-
+      fixture.detectChanges();
       expect(ngModel.valid).toBe(true);
       expect(ngModel.pristine).toBe(true);
       expect(ngModel.touched).toBe(false);
 
       labelElement.click();
+
+      fixture.detectChanges();
 
       fixture.whenStable().then(() => {
         fixture.detectChanges();
@@ -352,7 +456,22 @@ describe('Checkbox component', () => {
         inputElement.dispatchEvent(createEvent('blur'));
         expect(ngModel.touched).toBe(true);
       });
+    }));
 
+    it('should change check state through ngModel programmatically', async(() => {
+      fixture.whenStable().then(() => {
+        fixture.detectChanges();
+        expect(inputElement.checked).toBe(false);
+        expect(testComponent.isGood).toBe(false);
+        fixture.detectChanges();
+        testComponent.isGood = true;
+
+        fixture.detectChanges();
+        fixture.whenStable().then(() => {
+          fixture.detectChanges();
+          expect(inputElement.checked).toBe(true);
+        });
+      });
     }));
   });
 
@@ -371,101 +490,3 @@ describe('Checkbox component', () => {
     });
   });
 });
-
-/** Simple component for testing a single checkbox. */
-@Component({
-  directives: [SkyCheckboxComponent],
-  template: `
-  <div>
-    <sky-checkbox
-        id="simple-check"
-        [checked]="isChecked"
-        [disabled]="isDisabled"
-        (change)="checkboxChange($event)">
-      <sky-checkbox-label>
-        Simple checkbox
-      </sky-checkbox-label>
-    </sky-checkbox>
-  </div>`
-})
-class SingleCheckboxComponent {
-  public isChecked: boolean = false;
-  public isDisabled: boolean = false;
-
-  public checkboxChange($event: any) {
-    this.isChecked = $event.checked;
-  }
-}
-
-/** Simple component for testing an MdCheckbox with ngModel. */
-@Component({
-  directives: [SkyCheckboxComponent],
-  template: `
-    <form>
-      <sky-checkbox name="cb" [(ngModel)]="isGood">
-        <sky-checkbox-label>
-          Be good
-        </sky-checkbox-label>
-      </sky-checkbox>
-    </form>
-  `
-})
-class CheckboxWithFormDirectivesComponent {
-  public isGood: boolean = false;
-}
-
-/** Simple test component with multiple checkboxes. */
-@Component(({
-  directives: [SkyCheckboxComponent],
-  template: `
-    <sky-checkbox>
-      <sky-checkbox-label>
-        Option 1
-      </sky-checkbox-label>
-    </sky-checkbox>
-    <sky-checkbox>Option 2</sky-checkbox>
-  `
-}))
-class MultipleCheckboxesComponent { }
-
-/** Simple test component with tabIndex */
-@Component({
-  directives: [SkyCheckboxComponent],
-  template: `
-    <sky-checkbox [tabindex]="customTabIndex" [disabled]="isDisabled">
-    </sky-checkbox>`
-})
-class CheckboxWithTabIndexComponent {
-  public customTabIndex: number = 7;
-  public isDisabled: boolean = false;
-}
-
-/** Simple test component with an aria-label set. */
-@Component({
-  directives: [SkyCheckboxComponent],
-  template: `<sky-checkbox label="Super effective"></sky-checkbox>`
-})
-class CheckboxWithAriaLabelComponent { }
-
-/** Simple test component with an aria-label set. */
-@Component({
-  directives: [SkyCheckboxComponent],
-  template: `<sky-checkbox labelledBy="some-id"></sky-checkbox>`
-})
-class CheckboxWithAriaLabelledbyComponent {}
-
-/** Simple test component with name attribute */
-@Component({
-  directives: [SkyCheckboxComponent],
-  template: `<sky-checkbox name="test-name"></sky-checkbox>`
-})
-class CheckboxWithNameAttributeComponent {}
-
-/** Simple test component with change event */
-@Component({
-  directives: [SkyCheckboxComponent],
-  template: `<sky-checkbox (change)="lastEvent = $event"></sky-checkbox>`
-})
-class CheckboxWithChangeEventComponent {
-  public lastEvent: SkyCheckboxChange;
-}

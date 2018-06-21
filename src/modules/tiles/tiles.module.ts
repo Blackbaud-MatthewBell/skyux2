@@ -1,13 +1,18 @@
 import { NgModule } from '@angular/core';
 
+import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+
 import { SkyTileModule } from './tile';
-import { SkyTileContentSectionModule } from './tile-content-section';
+import { SkyTileContentModule } from './tile-content';
 import { SkyTileDashboardModule } from './tile-dashboard';
 import { SkyTileDashboardColumnModule } from './tile-dashboard-column';
 
 @NgModule({
+  imports: [
+    BrowserAnimationsModule
+  ],
   exports: [
-    SkyTileContentSectionModule,
+    SkyTileContentModule,
     SkyTileModule,
     SkyTileDashboardColumnModule,
     SkyTileDashboardModule

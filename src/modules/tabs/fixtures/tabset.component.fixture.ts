@@ -1,11 +1,8 @@
 import { Component } from '@angular/core';
 
-import { SkyTabComponent, SkyTabsetComponent } from '../';
-
 @Component({
   selector: 'sky-test-cmp',
-  template: require('./tabset.component.fixture.html'),
-  directives: [SkyTabComponent, SkyTabsetComponent]
+  templateUrl: './tabset.component.fixture.html'
 })
 export class TabsetTestComponent {
   public tab1Heading = 'Tab 1';
@@ -18,13 +15,19 @@ export class TabsetTestComponent {
 
   public tab2Available = true;
 
+  public tab2Disabled = false;
+
   public tab3Heading = 'Tab 3';
+
+  public tab3HeaderCount: number;
 
   public tab3Content: string;
 
   public tab3Available = true;
 
   public activeTab = 0;
+
+  public tabMaxWidth = 2000;
 
   public newTab() { }
 

@@ -1,25 +1,35 @@
 # Fail the build if this step fails
 set -e
 
-# Update the dist folder of the current branch, as long as it's a push and not a savage- branch.
+# Update the webdriver-screenshots folder of the current branch, as long as it's a push and not a savage- branch.
 if [[ "$TRAVIS_PULL_REQUEST" == "false" && ! $TRAVIS_BRANCH =~ $SAVAGE_BRANCH ]]; then
-  echo -e "Starting to update skyux.\n"
+  echo -e "Starting to update skyux2.\n"
 
   git config --global user.email "sky-build-user@blackbaud.com"
   git config --global user.name "Blackbaud Sky Build User"
   git clone --quiet --branch=$TRAVIS_BRANCH https://${GH_TOKEN}@github.com/blackbaud/skyux2.git skyux2 > /dev/null
 
-  cp -rf webdriver-screenshots/ skyux2/
-  cd skyux2
+  ls
 
-  git add webdriver-screenshots/
+  echo -e "Changing directory to skyux-spa-visual-tests"
 
-  if [ -z "$(git status --porcelain)" ]; then
-    echo -e "No changes to commit to skyux."
+  cd skyux-spa-visual-tests
+
+  ls
+
+  cp -rf screenshots-baseline/ ../skyux2/skyux-spa-visual-tests/
+
+  echo -e "Changing directory to skyux 2"
+
+  cd ../skyux2
+
+  if [ -z "$(git ls-files --others --exclude-standard)" ]; then
+    echo -e "No changes to commit to skyux2."
   else
-    git commit -m "Travis build $TRAVIS_BUILD_NUMBER pushed to skyux [ci skip]"
+    git add skyux-spa-visual-tests/screenshots-baseline/
+    git commit -m "Travis build $TRAVIS_BUILD_NUMBER pushed to skyux2 [ci skip]"
     git push -fq origin $TRAVIS_BRANCH > /dev/null
-    echo -e "skyux successfully updated.\n"
+    echo -e "skyux2 successfully updated.\n"
   fi
 
 fi

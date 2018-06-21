@@ -1,16 +1,33 @@
-import { Component, ElementRef, Input } from '@angular/core';
+import {
+  ChangeDetectorRef,
+  Component,
+  Input
+} from '@angular/core';
 
-import slideAnimation from '../animation/slide';
-import { SkyRepeaterService } from './repeater.service';
-import { SkyLogService } from '../log/log.service';
+import {
+  skyAnimationSlide
+} from '../animation/slide';
+
+import {
+  SkyCheckboxChange
+} from '../checkbox/checkbox.component';
+
+import {
+  SkyLogService
+} from '../log/log.service';
+
+import {
+  SkyRepeaterService
+} from './repeater.service';
 
 @Component({
   selector: 'sky-repeater-item',
-  styles: [require('./repeater-item.component.scss')],
-  template: require('./repeater-item.component.html'),
-  animations: [slideAnimation]
+  styleUrls: ['./repeater-item.component.scss'],
+  templateUrl: './repeater-item.component.html',
+  animations: [skyAnimationSlide]
 })
 export class SkyRepeaterItemComponent {
+
   public get isExpanded(): boolean {
     return this._isExpanded;
   }
@@ -20,18 +37,24 @@ export class SkyRepeaterItemComponent {
     this.updateForExpanded(value, true);
   }
 
+  public get isSelected(): boolean {
+    return this._isSelected;
+  }
+
+  @Input()
+  public selectable: boolean = false;
+
   public slideDirection: string;
 
   public get isCollapsible(): boolean {
     return this._isCollapsible;
   }
-
   public set isCollapsible(value: boolean) {
-    if (this._isCollapsible !== value) {
+    if (this.isCollapsible !== value) {
       this._isCollapsible = value;
 
       /*istanbul ignore else */
-      if (!this._isCollapsible) {
+      if (!value) {
         this.updateForExpanded(true, false);
       }
     }
@@ -41,9 +64,11 @@ export class SkyRepeaterItemComponent {
 
   private _isExpanded = true;
 
+  private _isSelected = false;
+
   constructor(
     private repeaterService: SkyRepeaterService,
-    private elementRef: ElementRef,
+    private changeDetector: ChangeDetectorRef,
     private logService: SkyLogService
   ) {
     this.slideForExpanded(false);
@@ -70,7 +95,12 @@ export class SkyRepeaterItemComponent {
 
       this.repeaterService.onItemCollapseStateChange(this);
       this.slideForExpanded(animate);
+      this.changeDetector.markForCheck();
     }
+  }
+
+  public updateIsSelected(value: SkyCheckboxChange) {
+    this._isSelected = value.checked;
   }
 
   private slideForExpanded(animate: boolean) {

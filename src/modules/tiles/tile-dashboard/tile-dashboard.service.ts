@@ -2,17 +2,25 @@ import {
   ComponentRef,
   EventEmitter,
   Injectable,
-  QueryList
+  QueryList,
+  ReflectiveInjector
 } from '@angular/core';
-import { DragulaService} from 'ng2-dragula/ng2-dragula';
+import { DragulaService } from 'ng2-dragula/ng2-dragula';
 
-import { SkyMediaQueryListenerArgs, SkyMediaQueryService } from '../../media-queries';
+import { Subscription } from 'rxjs/Subscription';
+
+import {
+  SkyMediaBreakpoints,
+  SkyMediaQueryService
+} from '../../media-queries';
+
 import { SkyTileComponent } from '../tile/tile.component';
 import { SkyTileDashboardColumnComponent } from '../tile-dashboard-column';
 import {
   SkyTileDashboardConfig,
   SkyTileDashboardConfigLayoutColumn,
-  SkyTileDashboardConfigLayoutTile
+  SkyTileDashboardConfigLayoutTile,
+  SkyTileDashboardConfigTile
 } from '../tile-dashboard-config';
 
 const ATTR_TILE_ID = '_sky-tile-dashboard-tile-id';
@@ -51,6 +59,8 @@ export class SkyTileDashboardService {
   private columns: QueryList<SkyTileDashboardColumnComponent>;
 
   private singleColumn: SkyTileDashboardColumnComponent;
+
+  private mediaSubscription: Subscription;
 
   constructor(
     private dragulaService: DragulaService,
@@ -127,11 +137,36 @@ export class SkyTileDashboardService {
     }
   }
 
+  public getTileComponent(tileId: string): ComponentRef<any> {
+    for (let tileComponent of this.tileComponents) {
+      if (tileComponent.location.nativeElement.getAttribute(ATTR_TILE_ID) === tileId) {
+        return tileComponent;
+      }
+    }
+
+    /*istanbul ignore next */
+    return undefined;
+  }
+
   public destroy() {
     /*istanbul ignore else */
-    if (this.mediaQuery) {
-      this.mediaQuery.destroy();
+    if (this.mediaSubscription) {
+      this.mediaSubscription.unsubscribe();
     }
+  }
+
+  private getTile(layoutTile: SkyTileDashboardConfigLayoutTile): SkyTileDashboardConfigTile {
+    /*istanbul ignore else */
+    if (layoutTile) {
+      for (let tile of this.config.tiles) {
+        if (tile.id === layoutTile.id) {
+          return tile;
+        }
+      }
+    }
+
+    /*istanbul ignore next */
+    return undefined;
   }
 
   private checkReady() {
@@ -148,7 +183,9 @@ export class SkyTileDashboardService {
   private loadTiles() {
     let layout = this.config.layout;
 
-    if (this.mediaQuery.matches) {
+    if (
+        this.mediaQuery.current === SkyMediaBreakpoints.xs
+        || this.mediaQuery.current === SkyMediaBreakpoints.sm) {
       for (let tile of layout.singleColumn.tiles) {
         this.loadTileIntoColumn(this.singleColumn, tile);
       }
@@ -166,13 +203,26 @@ export class SkyTileDashboardService {
   }
 
   private loadTileIntoColumn(
-    column: SkyTileDashboardColumnComponent, tile: SkyTileDashboardConfigLayoutTile
+    column: SkyTileDashboardColumnComponent,
+    layoutTile: SkyTileDashboardConfigLayoutTile
   ) {
-    let component = this.getTileComponentType(tile);
-    let factory = column.resolver.resolveComponentFactory(component);
-    let componentRef = column.content.createComponent(factory, undefined, column.injector);
+    let tile = this.getTile(layoutTile);
 
-    this.addTileComponent(tile, componentRef);
+    let componentType = tile.componentType;
+    let providers = tile.providers /* istanbul ignore next */ || [];
+
+    let resolvedProviders = ReflectiveInjector.resolve(providers);
+
+    let injector = ReflectiveInjector.fromResolvedProviders(resolvedProviders, column.injector);
+
+    let factory = column.resolver.resolveComponentFactory(componentType);
+    let componentRef = column.content.createComponent(factory, undefined, injector);
+
+    this.addTileComponent(layoutTile, componentRef);
+
+    // Make sure the component is marked for changes in case the parent component uses
+    // the OnPush change detection strategy.
+    componentRef.changeDetectorRef.markForCheck();
   }
 
   private moveTilesToSingleColumn() {
@@ -206,18 +256,8 @@ export class SkyTileDashboardService {
     }
   }
 
-  private getTileComponent(tileId: string): ComponentRef<SkyTileComponent> {
-    for (let tileComponent of this.tileComponents) {
-      if (tileComponent.location.nativeElement.getAttribute(ATTR_TILE_ID) === tileId) {
-        return tileComponent;
-      }
-    }
-
-    /*istanbul ignore next */
-    return undefined;
-  }
-
   private getConfigForUIState(): SkyTileDashboardConfig {
+    /*istanbul ignore else */
     if (this.config) {
       this.config = {
         tiles: this.config.tiles,
@@ -232,7 +272,8 @@ export class SkyTileDashboardService {
   }
 
   private getSingleColumnLayoutForUIState(): SkyTileDashboardConfigLayoutColumn {
-    if (this.mediaQuery.matches) {
+    if (this.mediaQuery.current === SkyMediaBreakpoints.xs
+        || this.mediaQuery.current === SkyMediaBreakpoints.sm) {
       return {
         tiles: this.getTilesInEl(this.getColumnEl(this.singleColumn))
       };
@@ -242,7 +283,8 @@ export class SkyTileDashboardService {
   }
 
   private getMultiColumnLayoutForUIState(): SkyTileDashboardConfigLayoutColumn[] {
-    if (!this.mediaQuery.matches) {
+    if (!(this.mediaQuery.current === SkyMediaBreakpoints.xs
+    || this.mediaQuery.current === SkyMediaBreakpoints.sm)) {
       let layoutColumns: SkyTileDashboardConfigLayoutColumn[] = [];
       let columns = this.columns.toArray();
 
@@ -284,10 +326,9 @@ export class SkyTileDashboardService {
   }
 
   private initMediaQueries() {
-    this.mediaQuery.init(
-      SkyMediaQueryService.sm,
-      (args: SkyMediaQueryListenerArgs) => {
-        this.changeColumnMode(this.mediaQuery.matches);
+    this.mediaSubscription = this.mediaQuery.subscribe(
+      (args: SkyMediaBreakpoints) => {
+        this.changeColumnMode(args === SkyMediaBreakpoints.xs || args === SkyMediaBreakpoints.sm);
       }
     );
   }

@@ -1,8 +1,26 @@
 language: node_js
+sudo: required
 
+# Limit the git history cloned for the tests.
 # https://docs.travis-ci.com/user/customizing-the-build/#Git-Clone-Depth
 git:
   depth: 10
+
+# Save the browserstack binary to a known location so we can cache it.
+env:
+  global:
+    - CXX=g++-4.8
+    - BROWSER_STACK_BINARY_BASE_PATH=$HOME/browserstack-binary
+  # Run three tasks in parallel:
+  # https://docs.travis-ci.com/user/customizing-the-build/#Build-Matrix
+  matrix:
+    - TEST_COMMAND=build
+    - TEST_COMMAND=visual
+    - TEST_COMMAND=coverage
+    - TEST_COMMAND=coverage-ie-batch IE_BATCH=1of4
+    - TEST_COMMAND=coverage-ie-batch IE_BATCH=2of4
+    - TEST_COMMAND=coverage-ie-batch IE_BATCH=3of4
+    - TEST_COMMAND=coverage-ie-batch IE_BATCH=4of4
 
 # https://docs.travis-ci.com/user/languages/javascript-with-nodejs#Node.js-v4-(or-io.js-v3)-compiler-requirements
 addons:
@@ -15,34 +33,40 @@ addons:
       - libcairo2-dev
 
 before_install:
-
   # https://github.com/npm/npm/issues/11283
   - npm set progress=false
 
+  - npm install -g @blackbaud/skyux-cli
   - export SAVAGE_BRANCH="^savage-"
-
+  - chmod +x ./scripts/travis-script-build.sh
+  - chmod +x ./scripts/travis-script-coverage.sh
+  - chmod +x ./scripts/travis-script-coverage-ie-batch.sh
+  - chmod +x ./scripts/travis-script-deploy.sh
+  - chmod +x ./scripts/travis-script-visual.sh
+  - chmod +x ./scripts/travis-after-failure.sh
   - chmod +x ./scripts/browserstack-cleanup.sh
-  - chmod +x ./scripts/npm-publish.sh
+  - chmod +x ./scripts/browserstack-local-start.sh
   - chmod +x ./scripts/visual-baseline.sh
   - chmod +x ./scripts/visual-failures.sh
 
-# Run `ci` instead of default of `test`
-script: npm run ci && ./scripts/visual-baseline.sh
+after_install:
+  - sudo cp .node_modules/@blackbaud/skyux-builder/ssl/skyux-ca.crt /usr/local/share/ca-certificates/skyux-ca.crt
+  - sudo update-ca-certificates
 
-# Upload coverage to https://codecov.io/gh/blackbaud/skyux2
-after_script:
-  - bash <(curl -s https://codecov.io/bash)
-  - ./scripts/browserstack-cleanup.sh
+script:
+  - eval "./scripts/travis-script-${TEST_COMMAND}.sh"
 
-# Publish a tag to NPM
-after_success:
-  - if [ -n "$TRAVIS_TAG" ]; then ./scripts/npm-publish.sh; fi
+# Run the deployment after all jobs have been successfully completed.
+# https://docs.travis-ci.com/user/build-stages
+jobs:
+  include:
+    - stage: deploy
+      env: TEST_COMMAND=none
+      script: ./scripts/travis-script-deploy.sh
 
-# Display any NPM / BrowserStack errors
 after_failure:
-  - ./scripts/visual-baseline.sh
-  - if [ -e ./npm-debug.log ]; then cat ./npm-debug.log; fi
-  - if [ -e ./browserstack.err ]; then cat ./browserstack.err; fi
+  - ./scripts/travis-after-failure.sh
+  - ./scripts/visual-failures.sh
 
 # When a push, only care about the master, rc-, and savage- branches.
 # Otherwise anytime we commit to internal branches this would run.
@@ -61,10 +85,6 @@ cache:
 
 notifications:
   slack:
-    secure: X3VK9q9hmAcdzxdf8Ba0OHNThYoKKxvFLaDE09s45/75NM38pWQ9iOBJ8GOxYOA0WePzRNEScPxUAFMVKXK0KDbgtcEZ5DdM7kBe7JMo+fB39VLD3L70MVRLdpXnsPZE283GyXmjrmSVg+5gJrSYLwifnvyoqnnRlexL/Hz2JvxbDxdigbgLv8nvgEm5k62RN6kTVFS8aWI7sY1K1aEQdn8yTMy0u1VhBNA3wcFYVpAD1rbyBoSuFhARDVBujTh/RQamngDFLDThKGdCIvf57ierCgLFv6XLFPsviQP5qBMzEbBwu9u0DmOeevUsXUGUPtBSzQN9hBlMU995/n79PoSrlGGmBjISzqwzvp4JNMSDfCh+ne/PX1kIqeFW8egSTVTfCgavbHN4kJvtJZNmi6eDHhFHagSHSBkRgAc6JGvVHVToA1I/u97rcV1nVInhEvUNE6NZ/gkMj0El841ce3IvSZUsFcz/8IoYANxY1LCTmgnF/9GZ3QkKvBU0qhOjsMNnH2zwih38H1Ppqb0/+e+6mlmHpksnKgYwwAS83ZuKzyZbw7I3wyKUEOBCy7wWq45ZjRc74hnrZn/TngHyQ5UXCIlUBn1SjqjyljIKsp85A0lsZLcIEUIsR+7brnMRtMUW5IUaOSow2b52lr4suHG/ShXnUAe1sj2+uxCiy64=
-
-# Save the browserstack binary to a known location so we can cache it
-env:
-  global:
-    - CXX=g++-4.8
-    - BROWSER_STACK_BINARY_BASE_PATH=$HOME/browserstack-binary
+    secure: AJd6KPL0tpgMp+tmF6ASiKtR6CW2qSXcL8H1+OVm++94n4iekdrxPX2PH97p8gmKHoyS0/qg0uBsl+Xv5HYrHe2pTFr75wj6J9KLDL5T1H9/eSowM01ugfcVZz0Lc7VqacUg3NV6NTPiLydy/XyhchT2KPIV5oQEw5FpNXj81Udo1O5fC4jhlc5SnQuHmdSRbqhXwXpOqYlyfZDW+njzJq5rIrZAKtWJOWyDR1BRtwSCuYyqMQoOS7WIzOgau5Tvx/X1YkZVohEesj1zsYd0dLkCrujkxPSHt8i5o010zlleeabz5w9lZWXreKbvA2qqHnGrIFoXftq2zPRJl4EgSBz6zDt0uTUDmOGDPHfG21pXuDTx1bwjHrV9VkjTsSp0nEmyWgJbn7EmJDo/y1cUk2+fkmuzTgn4wUqNfTMqGrQh8BKMzLG9wU3UxlHtKLgVqkeVNuEu0iZEIpcAAIbDHYbxYkUOr7pjmm/F1h/b3pojHC91UB6mdzJpSjfTCFlQsRwb2bASEvyTxuDex1bEHBnuK/kk+TeBgIplBXzBsQiEauj8mWeCmBXPaxNIagfsT4nVtBNW6ZsCoRpJC3t9CDI1DIkDtZKcxc4/KmMskunVmOliQyTY2tT86tyo1VpcZ3BI4TOd3sLwpeCX4SW25Y80N7vnXSBlaoU5JTcoUSo=
+  webhooks:
+    - http://sky-savage.cloudapp.net:6262/savage/travis

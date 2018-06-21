@@ -1,10 +1,16 @@
 import {
   async,
-  inject,
   TestBed
 } from '@angular/core/testing';
 
-import { TileTestComponent } from './fixtures';
+import {
+  expect
+} from '@blackbaud/skyux-builder/runtime/testing/browser';
+
+import {
+  MockSkyTileDashboardService,
+  TileTestComponent
+} from './fixtures';
 import { SkyTileComponent } from './tile.component';
 import { SkyTilesModule } from '../tiles.module';
 import { SkyTileDashboardService } from '../tile-dashboard/tile-dashboard.service';
@@ -17,9 +23,6 @@ describe('Tile component', () => {
       ],
       imports: [
         SkyTilesModule
-      ],
-      providers: [
-        SkyTileDashboardService
       ]
     });
   });
@@ -29,7 +32,7 @@ describe('Tile component', () => {
     let el = fixture.nativeElement;
 
     fixture.whenStable().then(() => {
-      expect(el.querySelector('.sky-tile-title sky-tile-title').innerText).toBe('Title');
+      expect(el.querySelector('.sky-tile-title sky-tile-title')).toHaveText('Title');
     });
   }));
 
@@ -51,6 +54,36 @@ describe('Tile component', () => {
 
       fixture.whenStable().then(() => {
         expect(contentAttrs['hidden']).toBe(undefined);
+      });
+    });
+  }));
+
+  it('should output state when collapsed/expanded', async(() => {
+    let fixture = TestBed.createComponent(TileTestComponent);
+    let el = fixture.nativeElement;
+
+    fixture.whenStable().then(() => {
+      let titleEl = el.querySelector('.sky-tile-title');
+
+      titleEl.click();
+      fixture.detectChanges();
+
+      fixture.whenStable().then(() => {
+        fixture.detectChanges();
+        expect(fixture.componentInstance.collapsedOutputCalled).toBe(false);
+
+        let contentAttrs = el.querySelector('.sky-tile-content').attributes;
+
+        expect(contentAttrs['hidden']).not.toBeNull();
+
+        titleEl.click();
+        fixture.detectChanges();
+
+        fixture.whenStable().then(() => {
+          fixture.detectChanges();
+          expect(contentAttrs['hidden']).toBe(undefined);
+          expect(fixture.componentInstance.collapsedOutputCalled).toBe(true);
+        });
       });
     });
   }));
@@ -99,11 +132,27 @@ describe('Tile component', () => {
   });
 
   it('should notify the tile dashboard when the tile is collapsed',
-    inject([SkyTileDashboardService], (dashboardService: SkyTileDashboardService) => {
-      let fixture = TestBed.createComponent(TileTestComponent);
+    () => {
+      let mockTileDashboardService = new MockSkyTileDashboardService();
+
+      let fixture = TestBed
+        .overrideComponent(
+          TileTestComponent,
+          {
+            add: {
+              providers: [
+                {
+                  provide: SkyTileDashboardService,
+                  useValue: mockTileDashboardService
+                }
+              ]
+            }
+          }
+        )
+        .createComponent(TileTestComponent);
 
       let el = fixture.nativeElement;
-      let dashboardSpy = spyOn(dashboardService, 'setTileCollapsed').and.callThrough();
+      let dashboardSpy = spyOn(mockTileDashboardService, 'setTileCollapsed').and.callThrough();
 
       fixture.detectChanges();
 
@@ -114,7 +163,7 @@ describe('Tile component', () => {
       fixture.detectChanges();
 
       expect(dashboardSpy).toHaveBeenCalledWith(jasmine.any(SkyTileComponent), true);
-    })
+    }
   );
 
   xit('should notify the tile that repaint is required when the tile is expanded', () => {
@@ -175,6 +224,32 @@ describe('Tile component', () => {
       fixture.detectChanges();
 
       expect(el.querySelector('.sky-tile-settings')).not.toBeNull();
+    });
+
+    it('should not be present if a callback is provided, but the showSettings flag is false', () => {
+      let html = `
+        <sky-tile [isCollapsed]="tileIsCollapsed" (settingsClick)="alert('settings clicked.')" [showSettings]="false">
+          <sky-tile-title>Title</sky-tile-title>
+          <sky-tile-content>Content</sky-tile-content>
+        </sky-tile>
+      `;
+
+      let fixture = TestBed
+        .overrideComponent(
+          TileTestComponent,
+          {
+            set: {
+              template: html
+            }
+          }
+        )
+        .createComponent(TileTestComponent);
+
+      let el = fixture.nativeElement;
+
+      fixture.detectChanges();
+
+      expect(el.querySelector('.sky-tile-settings')).toBeNull();
     });
 
     it('should call the specified callback when clicked', () => {

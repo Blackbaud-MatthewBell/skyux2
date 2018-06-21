@@ -1,11 +1,24 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import {
+  Component,
+  EventEmitter,
+  Input,
+  Output,
+  AfterContentInit,
+  ContentChildren,
+  QueryList,
+  OnDestroy
+} from '@angular/core';
+
+import { SkyCardTitleComponent} from './card-title.component';
+
+import { Subscription } from 'rxjs/Subscription';
 
 @Component({
   selector: 'sky-card',
-  styles: [require('./card.component.scss')],
-  template: require('./card.component.html')
+  styleUrls: ['./card.component.scss'],
+  templateUrl: './card.component.html'
 })
-export class SkyCardComponent {
+export class SkyCardComponent implements AfterContentInit, OnDestroy {
   @Input()
   public size: string;
 
@@ -18,10 +31,33 @@ export class SkyCardComponent {
   @Output()
   public selectedChange = new EventEmitter<boolean>();
 
+  @ContentChildren(SkyCardTitleComponent)
+  public titleComponent: QueryList<SkyCardTitleComponent>;
+
+  public showTitle: boolean = true;
+
+  private subscription: Subscription;
+
+  public ngAfterContentInit() {
+    this.showTitle = this.titleComponent.length > 0;
+
+    this.subscription = this.titleComponent.changes.subscribe(() => {
+      this.showTitle = this.titleComponent.length > 0;
+    });
+  }
+
   public contentClick() {
     if (this.selectable) {
       this.selected = !this.selected;
       this.selectedChange.emit(this.selected);
     }
-  };
+  }
+
+  public ngOnDestroy() {
+    /* istanbul ignore else */
+    /* sanity check */
+    if (this.subscription) {
+      this.subscription.unsubscribe();
+    }
+  }
 }
